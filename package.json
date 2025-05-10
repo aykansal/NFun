@@ -10,12 +10,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@ardrive/turbo-sdk": "^1.25.0",
     "@lazorkit/wallet": "^0.9.7",
-    "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
-    "@metaplex-foundation/umi": "^1.2.0",
-    "@metaplex-foundation/umi-bundle-defaults": "^1.2.0",
-    "@metaplex-foundation/umi-storage-mock": "^1.2.0",
     "@next/bundle-analyzer": "^15.1.6",
     "@prisma/client": "^6.7.0",
     "@radix-ui/react-dialog": "^1.1.5",
