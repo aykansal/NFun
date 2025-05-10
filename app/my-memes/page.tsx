@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { Triangle, Circle, Square } from 'lucide-react';
 import { buttonVariants, cardVariants } from '@/styles/animations';
 import XShareButton from '@/components/XShareBtn';

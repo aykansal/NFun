@@ -25,24 +25,37 @@ const connection = new Connection('https://rpc.lazorkit.xyz/', {
   confirmTransactionInitialTimeout: 60000,
 });
 
+export type WalletCreationStep = 'connecting' | 'generating' | 'finalizing';
+
 export function delay(seconds: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
 async function createSigpassWallet(pubkey: string) {
-  console.log("pubkey", pubkey)
+  console.log("pubkey", pubkey);
+  
+  // Emit generating step
+  window.dispatchEvent(new CustomEvent('walletCreationStep', { 
+    detail: { step: 'generating' } 
+  }));
+
   await createSmartWalletTransaction({
     secp256k1PubkeyBytes: Array.from(Buffer.from(pubkey, "base64")),
     connection: connection,
   });
 
-  await delay(20);
+  // await delay(2);
+
+  // Emit finalizing step
+  window.dispatchEvent(new CustomEvent('walletCreationStep', { 
+    detail: { step: 'finalizing' } 
+  }));
 
   const smartWalletPubkey = await getSmartWalletPdaByCreator(
     connection,
     Array.from(Buffer.from(pubkey, "base64"))
   );
-  console.log("smartWalletPubkey", smartWalletPubkey)
+  console.log("smartWalletPubkey", smartWalletPubkey);
   return smartWalletPubkey;
 }
 

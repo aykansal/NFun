@@ -74,7 +74,7 @@ export const metadata: Metadata = {
 };
 
 const AuthProviderNoSSR = dynamic(
-  () => import('@/contexts/AuthContext'),
+  () => import('@/context/AuthContext'),
   {
     ssr: false,
   }

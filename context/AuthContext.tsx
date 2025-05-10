@@ -10,6 +10,8 @@ import { createSigpassWallet } from '@/components/lazorkit/lib/sigpass';
 import { AuthContextType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
+import { WalletLoadingState } from '@/components/ui/WalletLoadingState';
+import { WalletCreationStep } from '@/components/lazorkit/lib/sigpass';
 
 // Create wallet context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -89,6 +91,18 @@ export default function AuthProvider({
 }) {
   const [wallet, setWallet] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [walletCreationStep, setWalletCreationStep] = useState<WalletCreationStep | null>(null);
+
+  useEffect(() => {
+    const handleWalletCreationStep = (event: CustomEvent<{ step: WalletCreationStep }>) => {
+      setWalletCreationStep(event.detail.step);
+    };
+
+    window.addEventListener('walletCreationStep', handleWalletCreationStep as EventListener);
+    return () => {
+      window.removeEventListener('walletCreationStep', handleWalletCreationStep as EventListener);
+    };
+  }, []);
 
   // Register user in the database
   const registerUserInDb = async (walletAddress: string) => {
@@ -148,6 +162,11 @@ export default function AuthProvider({
             console.log('Credential ID:', credentialId);
             console.log('Public Key:', publickey);
 
+            // Emit connecting step
+            window.dispatchEvent(new CustomEvent('walletCreationStep', { 
+              detail: { step: 'connecting' } 
+            }));
+
             // Handle the promise with .then() to log the actual value
             createSigpassWallet(publickey)
               .then(async (smartWalletPubkey) => {
@@ -160,10 +179,12 @@ export default function AuthProvider({
                 
                 setWallet(smartWalletPubkey);
                 toast.success('Wallet connected successfully!');
+                setWalletCreationStep(null); // Clear loading state
               })
               .catch((error) => {
                 console.error('Error creating smart wallet:', error);
                 toast.error('Failed to create smart wallet');
+                setWalletCreationStep(null); // Clear loading state
               });
 
             localStorage.setItem('CREDENTIAL_ID', credentialId);
@@ -175,6 +196,7 @@ export default function AuthProvider({
             console.log('Wallet disconnected');
             window.removeEventListener('message', handleMessage);
             reject(new Error('Wallet disconnected'));
+            setWalletCreationStep(null); // Clear loading state
             if (popup) {
               popup.close();
             }
@@ -182,6 +204,7 @@ export default function AuthProvider({
             window.removeEventListener('message', handleMessage);
             reject(new Error(event.data.error));
             toast.error(`Connection error: ${event.data.error}`);
+            setWalletCreationStep(null); // Clear loading state
             if (popup) {
               popup.close();
             }
@@ -195,6 +218,7 @@ export default function AuthProvider({
             clearInterval(checkPopupClosed);
             window.removeEventListener('message', handleMessage);
             reject(new Error('Popup closed unexpectedly'));
+            setWalletCreationStep(null); // Clear loading state
           }
         }, 500);
 
@@ -202,11 +226,13 @@ export default function AuthProvider({
           clearInterval(checkPopupClosed);
           window.removeEventListener('message', handleMessage);
           reject(new Error('Connection timeout'));
+          setWalletCreationStep(null); // Clear loading state
         }, 60000);
       });
     } catch (error) {
       console.error('Error connecting wallet:', error);
       toast.error('Failed to connect wallet');
+      setWalletCreationStep(null); // Clear loading state
     } finally {
       setLoading(false);
     }
@@ -229,6 +255,7 @@ export default function AuthProvider({
       ) : (
         <AnimatePresence>{children}</AnimatePresence>
       )}
+      {walletCreationStep && <WalletLoadingState currentStep={walletCreationStep} />}
     </AuthContext.Provider>
   );
 }

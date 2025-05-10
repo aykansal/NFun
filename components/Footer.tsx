@@ -1,15 +1,27 @@
-import { Circle, Square, Triangle } from 'lucide-react';
+import { Circle, Square, Triangle, Github } from 'lucide-react';
 import Link from 'next/link';
 
 export const AuthorDetails = ({ className }: { className?: string }) => {
   return (
-    <div className={`text-gray-400 text-sm ${className}`}>
-      <span className="font-ibm">{'Made with 💖 by '}</span>
+    <div
+      className={`text-gray-400 pb-3 text-sm flex items-center justify-center gap-4 ${className}`}
+    >
+      <div>
+        <span className="font-ibm">{'Made with 💖 by '}</span>
+        <Link
+          href="https://x.com/aykansal"
+          className="text-[#FF0B7A] hover:underline font-squid"
+        >
+          Aykansal
+        </Link>
+      </div>
+      <span>|</span>
       <Link
-        href="https://x.com/aykansal"
-        className="text-[#FF0B7A] hover:underline font-squid"
+        href="https://github.com/aykansal/nfun"
+        className="text-[#FF0B7A] hover:underline font-squid flex items-center gap-1"
       >
-        Aykansal
+        <Github className="w-4 h-4" />
+        View Source
       </Link>
     </div>
   );
@@ -28,7 +40,7 @@ export default function Footer() {
           <Square className="w-6 h-6 text-green-500 animate-spin" />
         </div>
       </div>
-      <AuthorDetails className='z-20' />
+      <AuthorDetails className="z-20" />
     </footer>
   );
 }

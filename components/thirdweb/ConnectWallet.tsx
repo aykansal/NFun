@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Button } from '../ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ConnectWallet() {
   const { wallet, loading, connectWallet, disconnectWallet } = useAuth();

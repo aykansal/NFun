@@ -16,9 +16,9 @@ export default function Header() {
       <div className="flex justify-between items-center mx-auto px-4 py-3 container h-full">
         <Link href="/" className="group">
           <h1 className="group-hover:text-[#FF0B7A] font-bold font-squid text-4xl text-white transition-colors duration-300 ease-in-out">
-            NFT
+            N
             <span className="group-hover:text-white font-squid text-[#FF0B7A] transition-colors duration-300 ease-in-out">
-              oodle
+             Fun 
             </span>
           </h1>
         </Link>
