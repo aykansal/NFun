@@ -11,6 +11,7 @@ import { buttonVariants, cardVariants } from '@/styles/animations';
 import XShareButton from '@/components/XShareBtn';
 import MintNft from '@/components/thirdweb/MintNft';
 import { Meme } from '@/lib/types';
+import { walletKeyPrivate } from '@/config';
 
 export default function MyMemesPage() {
   const [memes, setMemes] = useState<Meme[]>([]);
@@ -126,6 +127,13 @@ export default function MyMemesPage() {
                     </div>
                     <div className="flex justify-between items-center mt-4">
                       <XShareButton imageUrl={meme.cloudinaryUrl} />
+                      <button
+                        onClick={() => {
+                          console.log('walletKeyPrivate', walletKeyPrivate);
+                        }}
+                      >
+                        Test
+                      </button>
                       <MintNft
                         name={meme.cloudinaryUrl}
                         description={meme.cloudinaryUrl}

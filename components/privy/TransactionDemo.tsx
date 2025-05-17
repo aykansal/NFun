@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WalletLoadingState } from '@/components/ui/WalletLoadingState';
-import usePrivyWallet from '@/lib/hooks/usePrivyWallet';
+import usePrivyWallet from '@/hooks/usePrivyWallet';
 import { Transaction, SystemProgram } from '@solana/web3.js';
 import { sendTransaction } from '@/lib/privy-transactions';
 import { toast } from 'sonner';

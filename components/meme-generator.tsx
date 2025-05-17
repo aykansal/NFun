@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 import { useAuth } from '@/context/AuthContext';
-import usePrivyWallet from '@/lib/hooks/usePrivyWallet';
+import usePrivyWallet from '@/hooks/usePrivyWallet';
 import { SQUID_ELEMENTS } from '@/lib/constant';
 
 export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {

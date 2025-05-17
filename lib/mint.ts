@@ -1,8 +1,11 @@
-import Arweave from "arweave";
+import mime from 'mime-types';
+import { toast } from "sonner";
+import { walletKey } from "@/config";
+import { JWKInterface } from "arweave/node/lib/wallet";
+import { ArweaveSigner, TurboFactory } from "@ardrive/turbo-sdk/web";
 import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js";
 import { Metaplex, walletAdapterIdentity } from "@metaplex-foundation/js";
 
-// Define interface for Solana wallet provider to match WalletAdapter interface
 interface SolanaProvider {
     isConnected: boolean;
     publicKey: PublicKey;
@@ -15,9 +18,64 @@ declare global {
     }
 }
 
+// Constants
+const MAX_FILE_SIZE = 95 * 1024; // 95KB (slightly below 100KB limit)
+const MAX_DIMENSION = 800;
+
+/**
+ * Convert File to Uint8Array
+ */
+function fileToUint8Array(file: File): Promise<Uint8Array> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+/**
+ * Compress image using canvas
+ */
+async function compressImage(img: HTMLImageElement, quality: number, mimeType: string): Promise<Blob> {
+    const canvas = document.createElement('canvas');
+
+    // Calculate dimensions while maintaining aspect ratio
+    let width = img.width;
+    let height = img.height;
+
+    // Scale down if image is large
+    if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        if (width > height) {
+            height = Math.round(height * (MAX_DIMENSION / width));
+            width = MAX_DIMENSION;
+        } else {
+            width = Math.round(width * (MAX_DIMENSION / height));
+            height = MAX_DIMENSION;
+        }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Could not get canvas context');
+
+    ctx.drawImage(img, 0, 0, width, height);
+
+    return new Promise<Blob>(resolve => {
+        canvas.toBlob(blob => {
+            if (!blob) throw new Error('Canvas toBlob returned null');
+            resolve(blob);
+        }, mimeType, quality);
+    });
+}
+
+/**
+ * Fetch and optimize image from URL
+ */
 export const fetchImageFromUrl = async (url: string): Promise<File> => {
     console.log("Fetching image from URL:", url);
-    const MAX_FILE_SIZE = 95 * 1024; // 95KB (slightly below 100KB limit)
 
     const response = await fetch(url);
     const blob = await response.blob();
@@ -51,50 +109,14 @@ export const fetchImageFromUrl = async (url: string): Promise<File> => {
             ? 'image/gif'
             : 'image/png';
 
-    // Helper function to compress with canvas
-    const compressImage = (quality: number): Promise<Blob> => {
-        const canvas = document.createElement('canvas');
-
-        // Calculate dimensions - ensure we keep aspect ratio
-        let width = img.width;
-        let height = img.height;
-
-        // Scale down if image is large
-        const MAX_DIMENSION = 800;
-        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-            if (width > height) {
-                height = Math.round(height * (MAX_DIMENSION / width));
-                width = MAX_DIMENSION;
-            } else {
-                width = Math.round(width * (MAX_DIMENSION / height));
-                height = MAX_DIMENSION;
-            }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Could not get canvas context');
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        return new Promise<Blob>(resolve => {
-            canvas.toBlob(blob => {
-                if (!blob) throw new Error('Canvas toBlob returned null');
-                resolve(blob);
-            }, mimeType, quality);
-        });
-    };
-
     // Try compression with progressive quality reduction
     let quality = 0.8;
-    let compressed = await compressImage(quality);
+    let compressed = await compressImage(img, quality, mimeType);
 
     // If still too big, reduce quality until under limit
     while (compressed.size > MAX_FILE_SIZE && quality > 0.1) {
         quality -= 0.1;
-        compressed = await compressImage(quality);
+        compressed = await compressImage(img, quality, mimeType);
         console.log(`Compression quality: ${quality.toFixed(1)}, Size: ${Math.round(compressed.size / 1024)}KB`);
     }
 
@@ -129,187 +151,214 @@ export const fetchImageFromUrl = async (url: string): Promise<File> => {
     }
 
     console.log("Final compressed size:", Math.round(compressed.size / 1024), "KB");
+    URL.revokeObjectURL(img.src); // Clean up
 
     // Create File object from compressed blob
     return new File([compressed], filename, { type: mimeType });
 };
 
-export const uploadToArweave = async (imageInput: string | File, name: string, description: string) => {
-    console.log("Uploading to Arweave...");
-    let imageFile: File;
+/**
+ * Upload file to Arweave via Turbo
+ */
+const uploadToTurbo = async (file: File, creatorAddress: string) => {
+    const fileSize = file.size;
+    const fileName = file.name;
+    const contentType = file.type || mime.lookup(fileName) || 'application/octet-stream';
 
-    if (typeof imageInput === 'string') {
-        console.log("Converting URL to File:", imageInput);
-        imageFile = await fetchImageFromUrl(imageInput);
+    const signer = new ArweaveSigner(walletKey as JWKInterface);
+    const turbo = TurboFactory.authenticated({ signer });
+
+    // Check size and log appropriate message
+    if (fileSize > 100 * 1024) {
+        const [{ winc: fileSizeCost }] = await turbo.getUploadCosts({ bytes: [fileSize] });
+        console.log(`File: ${fileName}, Size: ${fileSize} bytes, Cost: ${fileSizeCost} Winc`);
     } else {
-        // If it's already a file, check if it needs compression
-        const MAX_FILE_SIZE = 95 * 1024; // 95KB
-        if (imageInput.size > MAX_FILE_SIZE) {
-            console.log("File is over 100KB, compressing...");
-            // Convert file to URL to use same compression pipeline
-            const url = URL.createObjectURL(imageInput);
-            imageFile = await fetchImageFromUrl(url);
-            URL.revokeObjectURL(url);
-        } else {
-            imageFile = imageInput;
-        }
+        console.log(`File: ${fileName}, Size: ${fileSize} bytes (Free upload)`);
     }
 
-    const arweave = Arweave.init({
-        host: "localhost",
-        port: 1984,
-        protocol: "http",
-        timeout: 20000,
-        logging: false
-    });
-
-    const host = arweave.getConfig().api.host;
-    const port = arweave.getConfig().api.port;
-    const protocol = arweave.getConfig().api.protocol;
-
-    const data = await imageFile.arrayBuffer();
-    console.log("data", data);
-    console.log("Final upload size:", Math.round(data.byteLength / 1024), "KB");
-
-    const transaction = await arweave.createTransaction({
-        data: data
-    });
-
-    transaction.addTag("App-Name", "NFToodle");
-    transaction.addTag("Content-Type", imageFile.type);
-    transaction.addTag("Content-Length", data.toString());
-
-
-    const wallet = await arweave.wallets.generate();
-    const address = await arweave.wallets.getAddress(wallet);
-
-    await arweave.api.get(`/mint/${encodeURI(address)}/10000000000000000`);
-    await arweave.transactions.sign(transaction, wallet);
-    await arweave.transactions.post(transaction);
-    console.log("transaction posted");
-    const id = transaction.id;
-    const imageUrl = id ? `${protocol}://${host}:${port}/${id}` : null;
-
-    const metadata = {
-        name: name,
-        symbol: "CNFT",
-        description: description,
-        seller_fee_basis_points: 500,
-        arweave_image: imageUrl,
-        external_url: imageInput,
-        attributes: [
-            {
-                trait_type: "NFT type",
-                value: "Custom"
+    try {
+        const buffer = await fileToUint8Array(file);
+        const uploadResult = await turbo.uploadFile({
+            // @ts-expect-error ignore
+            fileStreamFactory: () => {
+                return new ReadableStream({
+                    start(controller) {
+                        controller.enqueue(buffer);
+                        controller.close();
+                    }
+                });
+            },
+            fileSizeFactory: () => fileSize,
+            fileName: fileName,
+            contentType,
+            dataItemOpts: {
+                tags: [
+                    { name: 'Version', value: '2.0.1' },
+                    { name: "App-Name", value: "NFToodle" },
+                    { name: 'Content-Type', value: contentType },
+                    { name: 'Creator-Sol-Address', value: creatorAddress.toString() },
+                    { name: 'File-Extension', value: fileName.split('.').pop() || 'jpg' },
+                    { name: 'Wallet-Address', value: "ww5nJTj6dD6Q6oIg-bOm20y2yawWDqDcQbQDcmwGOlI" }
+                ]
             }
-        ],
-        collection: {
-            name: "Test Collection",
-            family: "Custom NFTs"
-        },
-        properties: {
-            files: [
+        });
+
+        if (!uploadResult.id) {
+            throw new Error("Failed to upload to Arweave");
+        }
+
+        console.log(`Uploaded ${fileName} (${contentType}) successfully. TX ID: ${uploadResult.id}`);
+        return uploadResult.id;
+    } catch (error) {
+        console.error(`Failed to upload ${fileName}:`, error instanceof Error ? error.message : error);
+        throw error;
+    }
+};
+
+/**
+ * Upload content to Arweave
+ */
+export const uploadToArweave = async (imageInput: string | File, name: string, description: string, creatorAddress: string) => {
+    console.log("Uploading to Arweave...");
+
+    try {
+        // Process the image input
+        let imageFile: File;
+        if (typeof imageInput === 'string') {
+            console.log("Converting URL to File:", imageInput);
+            imageFile = await fetchImageFromUrl(imageInput);
+        } else {
+            if (imageInput.size > MAX_FILE_SIZE) {
+                console.log("File is over size limit, compressing...");
+                const url = URL.createObjectURL(imageInput);
+                imageFile = await fetchImageFromUrl(url);
+                URL.revokeObjectURL(url);
+            } else {
+                imageFile = imageInput;
+            }
+        }
+
+        // Upload image to Arweave
+        const imgTxId = await uploadToTurbo(imageFile, creatorAddress);
+
+        // Create metadata
+        const metadata = {
+            name,
+            symbol: "NFToodle",
+            description,
+            seller_fee_basis_points: 500,
+            arweave_image: `https://arweave.net/${imgTxId}`,
+            external_url: typeof imageInput === 'string' ? imageInput : null,
+            attributes: [
                 {
-                    uri: imageUrl,
-                    type: imageFile.type
+                    trait_type: "NFT type",
+                    value: "Custom"
                 }
             ],
-            category: "image",
-            maxSupply: 0,
-            creators: [
-                {
-                    address: "CBBUMHRmbVUck99mTCip5sHP16kzGj3QTYB8K3XxwmQx",
-                    share: 100
-                }
-            ]
-        },
-    };
+            collection: {
+                name: "Test Collection",
+                family: "Custom NFTs"
+            },
+            properties: {
+                files: [
+                    {
+                        uri: `https://arweave.net/${imgTxId}`,
+                        type: imageFile.type
+                    }
+                ],
+                category: "image",
+                maxSupply: 0,
+                creators: [
+                    {
+                        address: "CBBUMHRmbVUck99mTCip5sHP16kzGj3QTYB8K3XxwmQx",
+                        share: 100
+                    }
+                ]
+            },
+        };
 
-    const metadataString = JSON.stringify(metadata);
+        // Upload metadata to Arweave
+        const metadataFile = new File(
+            [JSON.stringify(metadata)],
+            "metadata.json",
+            { type: "application/json" }
+        );
 
-    const metadataTransaction = await arweave.createTransaction({
-        data: metadataString
-    });
+        const metadataTxId = await uploadToTurbo(metadataFile, creatorAddress);
+        console.log("Metadata Transaction ID:", metadataTxId);
 
-    metadataTransaction.addTag("Content-Type", "application/json");
-    await arweave.transactions.sign(metadataTransaction, wallet);
-
-    const finalTxnDetails = await arweave.transactions.post(metadataTransaction);
-
-    return {
-        finalTxnDetails,
-        metadataUri: `${protocol}://${host}:${port}/${metadataTransaction.id}`
-    };
+        return {
+            finalTxnDetails: metadataTxId,
+            metadataUri: `https://arweave.net/${metadataTxId}`,
+            status: true,
+            error: null,
+        };
+    } catch (error) {
+        console.error("Error in uploadToArweave:", error);
+        return {
+            finalTxnDetails: null,
+            metadataUri: null,
+            status: false,
+            error: error instanceof Error ? error.message : "Unknown error during upload",
+        };
+    }
 };
 
 export const mintExistingNft = async (metadataUri: string, name: string) => {
-    console.log("🚀 Starting mintExistingNft function...");
-    console.log("Parameters:", { metadataUri, name });
-
+    console.log("Starting mintExistingNft function...");
     try {
-        // 1. Connect to Solana Devnet
-        console.log("🔌 Connecting to Solana testnet...");
         const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
-        console.log("✅ Connection established");
 
-        // 2. Get user's connected wallet (e.g. Phantom)
-        console.log("👛 Checking for wallet connection...");
         const provider = window.solana;
-        console.log("Provider:", provider);
-
         if (!provider || !provider.isConnected) {
-            console.error("❌ Wallet not connected");
             throw new Error("Wallet not connected");
         }
 
         const walletPublicKey = new PublicKey(provider.publicKey);
-        console.log("👛 Wallet connected:", walletPublicKey.toString());
-        // await connection.requestAirdrop(walletPublicKey, 2 * 1e9); // 2 SOL
 
-        // 3. Initialize Metaplex instance with wallet identity
-        console.log("🧰 Initializing Metaplex with wallet identity...");
+        // Initialize Metaplex
+        console.log("Initializing Metaplex with wallet identity...");
         const metaplex = Metaplex.make(connection).use(walletAdapterIdentity(provider));
-        console.log("✅ Metaplex initialized");
 
-        // 4. Create the NFT using user's wallet (no mint keypair needed)
-        console.log("🔨 Creating NFT with the following details:");
-        console.log("- URI:", metadataUri);
-        console.log("- Name:", name);
-        console.log("- Creator:", walletPublicKey.toString());
+        // Create the NFT
+        console.log("Creating NFT:", { metadataUri, name, creator: walletPublicKey.toString() });
 
-        console.log("⏳ Sending NFT creation transaction...");
         const { nft, response } = await metaplex.nfts().create({
-            uri: metadataUri,             // Link to your Arweave metadata JSON
-            name,                         // NFT name
-            symbol: "NFToodle",                   // Optional
-            sellerFeeBasisPoints: 0,      // No royalties
-            maxSupply: 1,                 // Only one copy
+            uri: metadataUri,
+            name,
+            symbol: "NFToodle",
+            sellerFeeBasisPoints: 0,
+            maxSupply: 10,
             creators: [
                 {
                     address: walletPublicKey,
                     share: 100,
-                    // verified: true,
                 },
             ],
         });
 
-        console.log("✅ NFT minted successfully!");
-        console.log("NFT Details:", nft);
+        console.log("NFT minted successfully!");
         console.log("NFT Address:", nft.address.toBase58());
-        console.log("Transaction Signature:", response);
+        console.log("Transaction Signature:", response.signature);
 
-        return { nft, response };
-    } catch (error: unknown) {
-        console.error("❌ Error in mintExistingNft:", error);
-        // Type guard for error with message and stack properties
+        return { nft, response, status: true };
+    } catch (error) {
         if (error instanceof Error) {
-            console.error("Error details:", {
-                message: error.message,
-                stack: error.stack
-            });
+            if (error.message.includes("User rejected")) {
+                console.log("User rejected the transaction");
+                toast.error("User rejected the transaction");
+            } else {
+                console.error("Error details:", {
+                    message: error.message,
+                    stack: error.stack
+                });
+                toast.error("Failed to mint NFT");
+            }
         } else {
-            console.error("Unknown error type:", error);
+            console.error("Unknown error:", error);
+            toast.error("Unknown error during minting");
         }
-        throw error;
+
+        return { status: false };
     }
-}
+};

@@ -7,11 +7,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import axios from 'axios';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import usePrivyWallet from '@/hooks/usePrivyWallet';
 import { buttonVariants } from '@/styles/animations';
 import { uploadToArweave, mintExistingNft } from '@/lib/mint';
-import usePrivyWallet from '@/lib/hooks/usePrivyWallet';
-import { toast } from 'sonner';
 
 interface NftDetails {
   nftAddress: string;
@@ -49,20 +49,21 @@ export default function MintNft({
   const { address: walletAddress } = usePrivyWallet();
 
   useEffect(() => {
-    if (image) {
-      const img = new Image();
-      img.src = image;
-      img.onload = () => {
-        setImageLoaded(true);
-        setIsLoading(false);
-      };
-      img.onerror = () => {
-        setError('Failed to load NFT image');
-        setIsLoading(false);
-      };
-    } else {
+    if (!image) {
       setIsLoading(false);
+      return;
     }
+
+    const img = new Image();
+    img.src = image;
+    img.onload = () => {
+      setImageLoaded(true);
+      setIsLoading(false);
+    };
+    img.onerror = () => {
+      setError('Failed to load NFT image');
+      setIsLoading(false);
+    };
   }, [image]);
 
   useEffect(() => {
@@ -71,9 +72,55 @@ export default function MintNft({
     }
   }, [name, description, image]);
 
-  async function mint() {
-    console.log(process.env.ARWEAVE_WALLET_KEYFILE);
+  useEffect(() => {
+    if (error) toast.error(error);
+    if (success) toast.success('NFT minted successfully');
+  }, [error, success]);
 
+  const checkExistingTxnHash = async () => {
+    try {
+      const response = await axios.get(`/api/memes?memeId=${memeId}`);
+      return {
+        exists: response.data.hasTxnHash && response.data.txnHash,
+        uri: response.data.txnHash,
+      };
+    } catch (err) {
+      console.error('Error checking existing transaction:', err);
+      return { exists: false, uri: null };
+    }
+  };
+
+  const updateTxnHashInDb = async (metadataUri: string) => {
+    try {
+      const response = await axios.put('/api/memes', {
+        userWallet: walletAddress,
+        memeId: memeId,
+        txnHash: metadataUri,
+      });
+      return !!response.data;
+    } catch (err) {
+      console.error('Error updating transaction hash:', err);
+      return false;
+    }
+  };
+
+  const updateMintStatus = async (nftDetails: NftDetails) => {
+    try {
+      const response = await axios.put('/api/memes/mint-status', {
+        userWallet: walletAddress,
+        memeId: memeId,
+        mintStatus: true,
+        nftDetails,
+      });
+      return !!response.data;
+    } catch (err) {
+      console.error('Error updating mint status:', err);
+      return false;
+    }
+  };
+
+  // Handle the mint process
+  const mint = async () => {
     if (!walletAddress) {
       setError('Please connect your wallet first');
       return;
@@ -83,56 +130,46 @@ export default function MintNft({
       setError(null);
       setSuccess(false);
 
-      // Generate a shorter display name for the NFT
+      // Generate display name for NFT
       const displayName = `NFToodle #${memeId}`;
       console.log(`Using display name for NFT: ${displayName}`);
 
-      // First, check if this meme already has a transaction hash in the database
-      console.log('Checking for existing txnHash...');
-      const checkResponse = await axios.get(`/api/memes?memeId=${memeId}`);
-      console.log('checkResponse', checkResponse.data);
+      // Check for existing transaction hash
+      const { exists, uri } = await checkExistingTxnHash();
+      let metadataUri = uri;
 
-      let metadataUri;
-
-      if (checkResponse.data.hasTxnHash && checkResponse.data.txnHash) {
-        console.log('Found existing txnHash 😄, skipping Arweave upload');
-        metadataUri = checkResponse.data.txnHash;
-      } else {
+      // If no existing transaction hash, upload to Arweave
+      if (!exists) {
         console.log('No existing txnHash found, uploading to Arweave...');
-        const { finalTxnDetails, metadataUri: newUri } = await uploadToArweave(
+        const {
+          metadataUri: newUri,
+          status,
+          error,
+        } = await uploadToArweave(
           image,
           displayName,
-          description
+          description,
+          walletAddress
         );
+
+        if (!status) throw new Error(error || 'Failed to upload to Arweave');
 
         metadataUri = newUri;
-        console.log('finalTxnDetails', finalTxnDetails);
-        console.log('metadataUri', metadataUri);
-        console.log(
-          'successfully uploaded to arweave, now updating database...'
-        );
-
-        // Update txnHash in DB
-        const updateResponse = await axios.put('/api/memes', {
-          userWallet: walletAddress,
-          memeId: memeId,
-          txnHash: metadataUri,
-        });
-
-        if (!updateResponse.data) {
-          throw new Error('Failed to update mint status in DB');
-        }
+        const updated = await updateTxnHashInDb(metadataUri);
+        if (!updated)
+          console.warn('Warning: Failed to update txnHash in database');
       }
 
+      // Mint the NFT
       console.log('Starting NFT mint with URI:', metadataUri);
-
       const mintResponse = await mintExistingNft(metadataUri, displayName);
-      console.log('Mint successful:\n', mintResponse);
 
-      if (mintResponse && mintResponse.nft) {
-        // Update mint status and store NFT details in DB
-        console.log('Updating mint status and NFT details in DB...');
+      if (!mintResponse.status) {
+        throw new Error('Failed to mint NFT');
+      }
 
+      // Store NFT details if mint was successful
+      if (mintResponse.nft) {
         const nftDetails: NftDetails = {
           nftAddress: mintResponse.nft.address.toString(),
           mintAddress: mintResponse.nft.mint?.address.toString() || '',
@@ -145,26 +182,16 @@ export default function MintNft({
         const token = mintResponse.nft as unknown as {
           token: { address: string; ownerAddress: string };
         };
-        if (token && token.token) {
+
+        if (token?.token) {
           nftDetails.tokenAddress = token.token.address.toString();
           nftDetails.ownerAddress = token.token.ownerAddress.toString();
         }
 
-        const updateMintStatusResponse = await axios.put(
-          '/api/memes/mint-status',
-          {
-            userWallet: walletAddress,
-            memeId: memeId,
-            mintStatus: true,
-            nftDetails,
-          }
-        );
-
-        console.log('DB update response:', updateMintStatusResponse.data);
-
-        if (!updateMintStatusResponse.data) {
+        const updated = await updateMintStatus(nftDetails);
+        if (!updated) {
           console.warn(
-            'Failed to update mint status in DB, but NFT was minted successfully'
+            'Warning: Failed to update mint status in DB, but NFT was minted successfully'
           );
         }
       }
@@ -172,29 +199,18 @@ export default function MintNft({
       setSuccess(true);
       setShowTooltip(true);
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes('User rejected the request')
-      ) {
-        setError('User rejected the request');
-        toast.error('User rejected the request');
-        return;
-      } else {
-        console.error('Failed to mint NFT\n', error);
-        toast.error('Failed to mint NFT');
-        setError(`Failed to mint NFT`);
+      if (error instanceof Error) {
+        if (error.message.includes('User rejected the request')) {
+          setError('User rejected the request');
+          toast.error('User rejected the request');
+        } else {
+          console.error('Failed to mint NFT:', error);
+          setError('Failed to mint NFT');
+          toast.error('Failed to mint NFT');
+        }
       }
     }
-  }
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-    if (success) {
-      toast.success('NFT minted successfully');
-    }
-  }, [error, success]);
+  };
 
   if (isLoading) {
     return (
@@ -204,8 +220,6 @@ export default function MintNft({
       </div>
     );
   }
-
-  // const isButtonDisabled = minted || isMinting || !!error;
 
   return (
     <div>
@@ -232,7 +246,6 @@ export default function MintNft({
                     className={`w-full px-4 py-2 rounded-lg font-bold text-white squid-button transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
                       isCurrentMinting ? 'animate-pulse' : ''
                     }`}
-                    // disabled={isButtonDisabled}
                     onClick={mint}
                   >
                     {isCurrentMinting ? (
