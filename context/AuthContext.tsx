@@ -6,12 +6,10 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { AuthorDetails } from '@/components/Footer';
 import { AnimatePresence } from 'framer-motion';
-import { createSigpassWallet } from '@/components/lazorkit/lib/sigpass';
 import { AuthContextType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
-import { WalletLoadingState } from '@/components/ui/WalletLoadingState';
-import { WalletCreationStep } from '@/components/lazorkit/lib/sigpass';
+import { usePrivy } from '@privy-io/react-auth';
 
 // Create wallet context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,27 +23,41 @@ export const useAuth = () => {
 };
 
 // Login UI component that doesn't use the auth context
-const LoginUI = ({ onConnect }: { onConnect: () => Promise<void> }) => {
+const LoginUI = () => {
   const [isConnecting, setIsConnecting] = useState(false);
-  
-  const handleConnect = async () => {
+  const { login } = usePrivy();
+
+  const handleSolanaLogin = async () => {
     setIsConnecting(true);
     try {
-      await onConnect();
+      // Use login method with Solana wallet options
+      await login({
+        loginMethods: ['wallet'],
+      });
     } finally {
-      setIsConnecting(false);
+      setTimeout(() => setIsConnecting(false), 1000);
     }
   };
-  
+
+  const handleGoogleLogin = async () => {
+    try {
+      await login({
+        loginMethods: ['google'],
+      });
+    } catch (error) {
+      console.error('Google login error:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="border-[#FF0B7A] bg-[#0A0A0A] border-b-2 shadow-lg sticky top-0 z-50">
         <div className="flex justify-between items-center mx-auto px-4 py-3 container">
           <Link href="/" className="group">
             <h1 className="group-hover:text-[#FF0B7A] font-bold font-squid text-4xl text-white transition-colors duration-300 ease-in-out">
-              NFT
+              N
               <span className="group-hover:text-white font-squid text-[#FF0B7A] transition-colors duration-300 ease-in-out">
-                oodle
+                Fun
               </span>
             </h1>
           </Link>
@@ -65,12 +77,23 @@ const LoginUI = ({ onConnect }: { onConnect: () => Promise<void> }) => {
               Your wallet seems to be taking a coffee break ☕️
             </p>
             <Button
-              className={`button connect-button ${isConnecting ? 'opacity-70' : ''}`}
-              onClick={handleConnect}
+              className={`button connect-button ${isConnecting ? 'opacity-70' : ''} mb-4 mr-3`}
+              onClick={handleSolanaLogin}
               disabled={isConnecting}
             >
-              {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+              {isConnecting ? 'Connecting...' : 'Connect Solana Wallet'}
             </Button>
+            <Button
+              variant="outline"
+              onClick={handleGoogleLogin}
+              className="mb-4"
+            >
+              Continue with Google
+            </Button>
+
+            <p className="text-sm text-neutral-500 mt-2">
+              No wallet? Sign in with Google to create one automatically
+            </p>
           </div>
         </div>
       </div>
@@ -89,20 +112,15 @@ export default function AuthProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [wallet, setWallet] = useState<string | null>(null);
+  const {
+    ready: isReady,
+    authenticated,
+    user,
+    logout,
+    connectWallet,
+  } = usePrivy();
   const [loading, setLoading] = useState(true);
-  const [walletCreationStep, setWalletCreationStep] = useState<WalletCreationStep | null>(null);
-
-  useEffect(() => {
-    const handleWalletCreationStep = (event: CustomEvent<{ step: WalletCreationStep }>) => {
-      setWalletCreationStep(event.detail.step);
-    };
-
-    window.addEventListener('walletCreationStep', handleWalletCreationStep as EventListener);
-    return () => {
-      window.removeEventListener('walletCreationStep', handleWalletCreationStep as EventListener);
-    };
-  }, []);
+  const [dbRegistered, setDbRegistered] = useState(false);
 
   // Register user in the database
   const registerUserInDb = async (walletAddress: string) => {
@@ -111,151 +129,146 @@ export default function AuthProvider({
       const response = await axios.post('/api/checkUser', {
         userWallet: walletAddress,
       });
-      
+
       console.log('User registration response:', response.data);
-      
+
       if (response.data.isNewUser) {
         toast.success('Welcome to NFun! Your account has been created.');
       } else {
         console.log('Existing user logged in:', response.data.user);
       }
-      
-      return response.data;
+
+      if (response.data.userExists) {
+        setDbRegistered(true);
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error('Error registering user in database:', error);
-      toast.error('Failed to register user in database');
-      return null;
+      toast.error('Failed to register user in database. Please try again.');
+      setDbRegistered(false);
+      return false;
     }
   };
 
-  // Initialize wallet state from localStorage on component mount
+  // Handle Privy authentication
   useEffect(() => {
-    const initializeWallet = async () => {
-      const storedWallet = localStorage.getItem('SMART_WALLET_PUBKEY');
-      if (storedWallet) {
-        setWallet(storedWallet);
-        console.log('Wallet restored from localStorage:', storedWallet.slice(0, 10));
-        toast.success('Wallet connected successfully!');
-        
-        // Register/fetch the user in the database
-        await registerUserInDb(storedWallet);
-      }
-      setLoading(false);
-    };
-    
-    initializeWallet();
-  }, []);
-
-  async function connectWallet() {
-    setLoading(true);
-    try {
-      const popup = window.open(
-        'https://w3s.link/ipfs/bafybeibvvxqef5arqj4uy22zwl3hcyvrthyfrjzoeuzyfcbizjur4yt6by/?action=connect',
-        'WalletAction',
-        'width=600,height=400'
-      );
-      
-      new Promise((resolve, reject) => {
-        const handleMessage = (event: MessageEvent) => {
-          if (event.data.type === 'WALLET_CONNECTED') {
-            const { credentialId, publickey } = event.data.data;
-            console.log('Credential ID:', credentialId);
-            console.log('Public Key:', publickey);
-
-            // Emit connecting step
-            window.dispatchEvent(new CustomEvent('walletCreationStep', { 
-              detail: { step: 'connecting' } 
-            }));
-
-            // Handle the promise with .then() to log the actual value
-            createSigpassWallet(publickey)
-              .then(async (smartWalletPubkey) => {
-                localStorage.removeItem('SMART_WALLET_PUBKEY');
-                console.log('Smart Wallet Pubkey:', smartWalletPubkey);
-                localStorage.setItem('SMART_WALLET_PUBKEY', smartWalletPubkey);
-                
-                // Register user in database
-                await registerUserInDb(smartWalletPubkey);
-                
-                setWallet(smartWalletPubkey);
-                toast.success('Wallet connected successfully!');
-                setWalletCreationStep(null); // Clear loading state
-              })
-              .catch((error) => {
-                console.error('Error creating smart wallet:', error);
-                toast.error('Failed to create smart wallet');
-                setWalletCreationStep(null); // Clear loading state
-              });
-
-            localStorage.setItem('CREDENTIAL_ID', credentialId);
-            localStorage.setItem('PUBLIC_KEY', publickey);
-
-            window.removeEventListener('message', handleMessage);
-            resolve({ credentialId, publickey });
-          } else if (event.data.type === 'WALLET_DISCONNECTED') {
-            console.log('Wallet disconnected');
-            window.removeEventListener('message', handleMessage);
-            reject(new Error('Wallet disconnected'));
-            setWalletCreationStep(null); // Clear loading state
-            if (popup) {
-              popup.close();
-            }
-          } else if (event.data.type === 'WALLET_ERROR') {
-            window.removeEventListener('message', handleMessage);
-            reject(new Error(event.data.error));
-            toast.error(`Connection error: ${event.data.error}`);
-            setWalletCreationStep(null); // Clear loading state
-            if (popup) {
-              popup.close();
-            }
-          }
-        };
-
-        window.addEventListener('message', handleMessage);
-
-        const checkPopupClosed = setInterval(() => {
-          if (popup && popup.closed) {
-            clearInterval(checkPopupClosed);
-            window.removeEventListener('message', handleMessage);
-            reject(new Error('Popup closed unexpectedly'));
-            setWalletCreationStep(null); // Clear loading state
-          }
-        }, 500);
-
-        setTimeout(() => {
-          clearInterval(checkPopupClosed);
-          window.removeEventListener('message', handleMessage);
-          reject(new Error('Connection timeout'));
-          setWalletCreationStep(null); // Clear loading state
-        }, 60000);
-      });
-    } catch (error) {
-      console.error('Error connecting wallet:', error);
-      toast.error('Failed to connect wallet');
-      setWalletCreationStep(null); // Clear loading state
-    } finally {
-      setLoading(false);
+    if (!isReady) {
+      // Privy is still initializing
+      return;
     }
-  }
 
-  const disconnectWallet = () => {
-    localStorage.removeItem('CREDENTIAL_ID');
-    localStorage.removeItem('PUBLIC_KEY');
-    localStorage.removeItem('SMART_WALLET_PUBKEY');
-    setWallet(null);
-    toast.info('Wallet disconnected');
-    console.log('Wallet disconnected');
+    const initializeUser = async () => {
+      if (authenticated && user) {
+        setLoading(true);
+        try {
+          // Get the wallet address from the user's linked accounts
+          const walletAccounts = user.linkedAccounts.filter(
+            (account) => account.type === 'wallet'
+          );
+
+          let walletAddress = null;
+
+          if (walletAccounts.length > 0) {
+            walletAddress = walletAccounts[0].address;
+            console.log('User authenticated with wallet:', walletAddress);
+          } else if (user.wallet && user.wallet.address) {
+            // For embedded wallets
+            walletAddress = user.wallet.address;
+            console.log(
+              'User authenticated with embedded wallet:',
+              walletAddress
+            );
+          }
+
+          if (walletAddress) {
+            // Register user in database
+            const registrationSuccess = await registerUserInDb(walletAddress);
+
+            if (registrationSuccess) {
+              toast.success('Wallet connected successfully!');
+              setDbRegistered(true);
+            } else {
+              toast.error('Failed to register wallet. Please try again.');
+              await logout();
+              setDbRegistered(false);
+            }
+          } else {
+            toast.error('No wallet found. Please try again with a wallet.');
+            await logout();
+            setDbRegistered(false);
+          }
+        } catch (error) {
+          console.error('Error initializing user:', error);
+          toast.error('Failed to initialize user');
+          setDbRegistered(false);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+        setDbRegistered(false);
+      }
+    };
+
+    initializeUser();
+  }, [isReady, authenticated, user, logout]);
+
+  const disconnectWallet = async () => {
+    try {
+      await logout();
+      setDbRegistered(false);
+      toast.info('Wallet disconnected');
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error);
+      toast.error('Failed to disconnect wallet');
+    }
+  };
+
+  // Determine wallet address from user object
+  const getWalletAddress = () => {
+    if (!user) return null;
+
+    const walletAccount = user.linkedAccounts.find(
+      (account) => account.type === 'wallet'
+    );
+
+    return walletAccount?.address || user.wallet?.address || null;
+  };
+
+  const wallet = getWalletAddress();
+
+  // Create a function that returns a Promise for connectWallet to match AuthContextType
+  const handleConnectWallet = async (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      try {
+        connectWallet();
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
   };
 
   // Always return the context provider, but conditionally render children or login UI
   return (
-    <AuthContext.Provider value={{ wallet, loading, connectWallet, disconnectWallet }}>
-      {!wallet && !loading ? (
-        <LoginUI onConnect={connectWallet} />
+    <AuthContext.Provider
+      value={{
+        wallet,
+        loading: loading || !isReady,
+        connectWallet: handleConnectWallet,
+        disconnectWallet,
+      }}
+    >
+      {!isReady ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF0B7A]"></div>
+        </div>
+      ) : (!authenticated || !dbRegistered) && !loading ? (
+        <LoginUI />
       ) : (
         <AnimatePresence>{children}</AnimatePresence>
       )}
-      {walletCreationStep && <WalletLoadingState currentStep={walletCreationStep} />}
     </AuthContext.Provider>
   );
 }

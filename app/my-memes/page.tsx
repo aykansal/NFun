@@ -132,10 +132,8 @@ export default function MyMemesPage() {
                         image={meme.cloudinaryUrl}
                         minted={meme.minted}
                         memeId={meme.id}
-                        isMinting={false}
+                        // isMinting={false}
                         isCurrentMinting={false}
-                        onMintStart={() => {}}
-                        onMintComplete={() => {}}
                       />
                     </div>
                   </div>

@@ -23,120 +23,8 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 import { useAuth } from '@/context/AuthContext';
-import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { useWallet } from '@lazorkit/wallet';
-
-// Enhanced Squid Game themed elements
-const SQUID_ELEMENTS = {
-  emojis: {
-    circle: '⭕️',
-    triangle: '🔺',
-    square: '⬛',
-    mask: '🎭',
-    guard: '👥',
-    doll: '🎎',
-    cookie: '🍪',
-    money: '💰',
-    gun: '🔫',
-    skull: '💀',
-    glass: '🪟',
-    umbrella: '☂️',
-  },
-  filters: {
-    redLight: {
-      name: 'Red Light',
-      filter:
-        'brightness(120%) saturate(180%) hue-rotate(340deg) contrast(130%) sepia(20%)',
-      // Creates an intense red atmosphere with enhanced contrast
-    },
-    greenLight: {
-      name: 'Green Light',
-      filter:
-        'brightness(115%) saturate(140%) hue-rotate(85deg) contrast(120%) sepia(15%)',
-      // Vivid green with slight warmth
-    },
-    arenaMode: {
-      name: 'Arena',
-      filter:
-        'contrast(140%) brightness(85%) saturate(120%) sepia(30%) hue-rotate(15deg)',
-      // Dark, gritty look with enhanced contrast
-    },
-    neonNight: {
-      name: 'Neon Night',
-      filter:
-        'brightness(130%) contrast(140%) saturate(200%) hue-rotate(190deg)',
-      // Cyberpunk-style with intense colors
-    },
-    dollScene: {
-      name: 'Doll Scene',
-      filter:
-        'sepia(50%) brightness(105%) contrast(130%) saturate(140%) hue-rotate(305deg)',
-      // Creepy vintage look with purple tint
-    },
-    glassGame: {
-      name: 'Glass Bridge',
-      filter:
-        'brightness(110%) contrast(120%) saturate(110%) blur(0.4px) hue-rotate(10deg)',
-      // Subtle glass effect with slight blur
-    },
-    vhs: {
-      name: 'VHS Style',
-      filter:
-        'contrast(150%) brightness(95%) saturate(130%) sepia(20%) hue-rotate(5deg)',
-      // Retro VHS look
-    },
-    nightmare: {
-      name: 'Nightmare',
-      filter:
-        'contrast(160%) brightness(80%) saturate(160%) hue-rotate(270deg) grayscale(30%)',
-      // Dark and ominous
-    },
-    synthwave: {
-      name: 'Synthwave',
-      filter:
-        'brightness(120%) contrast(140%) saturate(180%) hue-rotate(220deg)',
-      // 80s synthwave aesthetic
-    },
-    elimination: {
-      name: 'Elimination',
-      filter:
-        'contrast(150%) brightness(90%) saturate(170%) sepia(40%) hue-rotate(320deg)',
-      // Dramatic red-tinted elimination scene
-    },
-  },
-  fonts: {
-    impact: 'Impact',
-    squidGame: 'SquidGame',
-    pixel: 'Press Start 2P',
-    future: 'Orbitron',
-  },
-  captions: [
-    "Red light... 🔴 Green light... 🟢 You won't escape!",
-    "The game isn't over yet... 🦑 The real challenge begins now!",
-    'Choose wisely, your next move could cost you everything 🎮',
-    'The Front Man sees all 👁️ but can you escape his gaze?',
-    '456 reasons to play again... but no promises of survival 🎲',
-    'Glass stepping stones... Choose or lose! 🪟 Are you brave enough?',
-    'Honeycomb challenge accepted 🍯 Break the cookie or break your fate.',
-    'Tug of war champion 🏆 Who will survive the final pull?',
-    'Marbles: friend or foe? 🔮 Will you win with a friend, or alone?',
-    "Final round: Squid Game 🦑 There's no going back now...",
-  ],
-};
-
-// const connection = new Connection('https://rpc.lazorkit.xyz/', {
-//   wsEndpoint: 'https://rpc.lazorkit.xyz/ws/',
-//   commitment: 'confirmed',
-//   confirmTransactionInitialTimeout: 60000,
-// });
-// const keypair = Keypair2.fromSecretKey(
-//   new Uint8Array([
-//     91, 139, 202, 42, 20, 31, 61, 11, 170, 237, 184, 147, 253, 10, 63, 240, 131,
-//     46, 231, 211, 253, 181, 58, 104, 242, 192, 0, 143, 19, 252, 47, 158, 219,
-//     165, 97, 103, 220, 26, 173, 243, 207, 52, 18, 44, 64, 84, 249, 104, 158,
-//     221, 84, 61, 36, 240, 55, 20, 76, 59, 142, 34, 100, 132, 243, 236,
-//   ])
-// );
+import usePrivyWallet from '@/lib/hooks/usePrivyWallet';
+import { SQUID_ELEMENTS } from '@/lib/constant';
 
 export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -160,7 +48,8 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
   } | null>(null);
   const [isPlacingEmoji, setIsPlacingEmoji] = useState(false);
 
-  const { signMessage } = useWallet();
+  // Use our Privy wallet hook instead of LazorKit
+  const { signMessage } = usePrivyWallet();
   const { wallet: userWallet } = useAuth();
 
   useEffect(() => {
@@ -439,70 +328,6 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
     const imageDataUrl = canvas.toDataURL('image/png');
 
     try {
-      // const popup = window.open(
-      //   'https://w3s.link/ipfs/bafybeibvvxqef5arqj4uy22zwl3hcyvrthyfrjzoeuzyfcbizjur4yt6by/?action=sign&message=hello',
-      //   'WalletAction',
-      //   'width=600,height=400'
-      // );
-
-      // if (!popup) {
-      //   throw new Error('Popup blocked. Please allow popups and try again.');
-      // }
-
-      // const handleMessage = async (event: MessageEvent) => {
-      //   if (event.data?.type === 'SIGNATURE_CREATED') {
-      //     window.removeEventListener('message', handleMessage); // Clean up listener
-
-      //     try {
-      //       const storedPublicKey = localStorage.getItem('PUBLIC_KEY');
-      //       if (!storedPublicKey) {
-      //         throw new Error('Public key not found');
-      //       }
-
-      //       const smartWalletPubkey = await getSmartWalletPdaByCreator(
-      //         connection,
-      //         Array.from(Buffer.from(storedPublicKey, 'base64'))
-      //       );
-      //       const instruction = new TransactionInstruction({
-      //         keys: [
-      //           {
-      //             pubkey: new PublicKey(smartWalletPubkey),
-      //             isSigner: true,
-      //             isWritable: true,
-      //           },
-      //           // Add other accounts your instruction needs
-      //         ],
-      //         programId: new PublicKey(
-      //           'BqbCmDr1KEwPhEt2UtbRiWYrKmUdTaoFKFnn6XRKKMQE'
-      //         ), // Memo program ID
-      //         data: Buffer.from(`NFun Meme Created: ${'test-id'}`, 'utf-8'),
-      //       });
-
-      //       const { normalized, msg } = event.data.data;
-
-      //       const txn = await createVerifyAndExecuteTransaction({
-      //         arbitraryInstruction: instruction, // Make sure 'instruction' is defined
-      //         pubkey: Buffer.from(storedPublicKey, 'base64'),
-      //         signature: Buffer.from(normalized, 'base64'),
-      //         message: Buffer.from(msg, 'base64'),
-      //         connection,
-      //         payer: keypair.publicKey,
-      //         smartWalletPda: new PublicKey(smartWalletPubkey), // Ensure PublicKey is correctly imported
-      //       });
-
-      //       txn.partialSign(keypair);
-      //       const txid = await connection.sendRawTransaction(txn.serialize(), {
-      //         skipPreflight: true,
-      //       });
-
-      //       console.log('Transaction ID:', txid);
-      //     } catch (err) {
-      //       console.error('Error signing message:', err);
-      //     }
-      //   }
-      // };
-
-      // window.addEventListener('message', handleMessage);
 
       const response = await axios.post('/api/memes', {
         imageDataUrl,
@@ -513,25 +338,11 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
       
       // Get the meme ID from the response
       const memeId = response.data.id;
-
-      // Create and sign the transaction
-      const instruction = new TransactionInstruction({
-        keys: [
-          {
-            // @ts-expect-error ignore
-            pubkey: new PublicKey(userWallet),
-            isSigner: true,
-            isWritable: true,
-          },
-        ],
-        programId: new PublicKey(
-          'BqbCmDr1KEwPhEt2UtbRiWYrKmUdTaoFKFnn6XRKKMQE'
-        ), // Memo program ID
-        data: Buffer.from(`NFun Meme Created: ${memeId}`, 'utf-8'),
-      });
       
       // Sign the message and get transaction ID
-      const transactionResult = await signMessage(instruction);
+      // Convert instruction to a string message for Privy signing
+      const messageString = `NFun Meme Created: ${memeId}`;
+      const transactionResult = await signMessage(messageString);
       console.log('Transaction ID:', transactionResult);
       
       // If we got a transaction hash, update the meme record

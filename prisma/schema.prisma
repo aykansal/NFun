@@ -16,14 +16,16 @@ datasource db {
 }
 
 model meme {
-  id            Int      @id @default(autoincrement())
-  cloudinaryUrl String   @unique
+  id            Int        @id @default(autoincrement())
+  cloudinaryUrl String     @unique
   originalImage String
-  createdAt     DateTime @default(now())
-  user          user     @relation(fields: [userWallet], references: [userWallet])
+  createdAt     DateTime   @default(now())
+  user          user       @relation(fields: [userWallet], references: [userWallet])
   userWallet    String
-  minted        Boolean  @default(false)
-  txnhash       String?  @unique
+  minted        Boolean    @default(false)
+  txnhash       String?    @unique @default("")
+  nftDetail     NftDetail? @relation(fields: [nftDetailId], references: [id])
+  nftDetailId   Int?
 }
 
 model user {
@@ -32,6 +34,18 @@ model user {
   userWallet String   @unique
   username   String   @unique
   createdAt  DateTime @default(now())
+}
+
+model NftDetail {
+  id                   Int     @id @default(autoincrement())
+  nftAddress           String  @unique
+  mintAddress          String
+  name                 String
+  uri                  String
+  transactionSignature String  @unique
+  tokenAddress         String?
+  ownerAddress         String?
+  meme                 meme[]
 }
 
 model nfts {

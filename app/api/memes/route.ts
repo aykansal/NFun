@@ -172,6 +172,29 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '9');
     const skip = (page - 1) * limit;
+    const memeId = searchParams.get('memeId');
+
+    // If memeId is provided, return that specific meme with txnhash if available
+    if (memeId) {
+      const meme = await prisma.meme.findUnique({
+        where: {
+          id: parseInt(memeId)
+        }
+      });
+
+      if (!meme) {
+        return NextResponse.json(
+          { error: 'Meme not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        meme,
+        hasTxnHash: !!meme.txnhash,
+        txnHash: meme.txnhash
+      });
+    }
 
     // Get total count for pagination
     const totalCount = await prisma.meme.count();
@@ -255,7 +278,7 @@ export async function PUT(req: NextRequest) {
         userWallet: userWallet
       },
       data: {
-        minted: true,
+        // minted: true,
         txnhash: txnHash
       }
     });

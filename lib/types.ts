@@ -4,7 +4,7 @@ export interface User {
   userWallet: string;
   memes: Meme[];  // Related memes for the user
   createdAt: Date;
-  username:string;
+  username: string;
 }
 
 // Auth Context Type
@@ -12,7 +12,7 @@ export interface AuthContextType {
   wallet: string | null;
   loading: boolean;
   connectWallet: () => Promise<void>;
-  disconnectWallet: () => void;
+  disconnectWallet: () => Promise<void>;
 }
 
 export interface tokenList {
@@ -187,16 +187,4 @@ export interface MemeCard {
   defense: number;
   special: number;
   isPlayed: boolean;
-}
-
-export interface MintNftData {
-  name: string;
-  description: string;
-  image: string;
-  minted: boolean;
-  memeId: number;
-  isMinting: boolean;
-  isCurrentMinting: boolean;
-  onMintStart: () => void;
-  onMintComplete: (txStatus: boolean) => void;
 }
