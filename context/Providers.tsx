@@ -2,6 +2,7 @@
 
 import { PrivyProvider } from '@privy-io/react-auth';
 import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
+import { MintingProvider } from './MintingContext';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -43,7 +44,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      {children}
+      <MintingProvider>{children}</MintingProvider>
     </PrivyProvider>
   );
 }

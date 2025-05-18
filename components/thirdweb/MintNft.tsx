@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import { buttonVariants } from '@/styles/animations';
 import { uploadToArweave, mintExistingNft } from '@/lib/mint';
 import { useAuth } from '@/context/AuthContext';
+import { useMinting } from '@/context/MintingContext';
 
 interface NftDetails {
   nftAddress: string;
@@ -47,6 +48,7 @@ export default function MintNft({
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
   const { wallet: walletAddress } = useAuth();
+  const { startMinting, updateMintingStep, finishMinting } = useMinting();
 
   useEffect(() => {
     if (!image) {
@@ -129,6 +131,9 @@ export default function MintNft({
     try {
       setError(null);
       setSuccess(false);
+      
+      // Start the minting process and show the overlay
+      startMinting(memeId);
 
       // Generate display name for NFT
       const displayName = `NFToodle #${memeId}`;
@@ -140,6 +145,7 @@ export default function MintNft({
 
       // If no existing transaction hash, upload to Arweave
       if (!exists) {
+        updateMintingStep('uploading');
         console.log('No existing txnHash found, uploading to Arweave...');
         const {
           metadataUri: newUri,
@@ -161,6 +167,7 @@ export default function MintNft({
       }
 
       // Mint the NFT
+      updateMintingStep('minting');
       console.log('Starting NFT mint with URI:', metadataUri);
       const mintResponse = await mintExistingNft(metadataUri, displayName);
 
@@ -169,6 +176,7 @@ export default function MintNft({
       }
 
       // Store NFT details if mint was successful
+      updateMintingStep('confirming');
       if (mintResponse.nft) {
         const nftDetails: NftDetails = {
           nftAddress: mintResponse.nft.address.toString(),
@@ -198,6 +206,9 @@ export default function MintNft({
 
       setSuccess(true);
       setShowTooltip(true);
+      
+      // End the minting process and hide the overlay
+      finishMinting();
     } catch (error) {
       if (error instanceof Error) {
         if (error.message.includes('User rejected the request')) {
@@ -212,6 +223,9 @@ export default function MintNft({
       } else {
         setError('Failed to mint NFT !!');
       }
+      
+      // End the minting process and hide the overlay
+      finishMinting();
     }
   };
 

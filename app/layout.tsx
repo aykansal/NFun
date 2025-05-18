@@ -8,6 +8,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { layoutMetadata } from '@/lib/constant';
 import Providers from '@/context/Providers';
 import AuthProvider from '@/context/AuthContext';
+import MintingOverlayWrapper from '@/components/thirdweb/MintingOverlayWrapper';
 
 const squid = localFont({
   src: '../public/fonts/squid.woff',
@@ -46,6 +47,7 @@ export default function RootLayout({
                 </main>
                 <Footer />
               </div>
+              <MintingOverlayWrapper />
               <Toaster />
             </div>
           </AuthProvider>
