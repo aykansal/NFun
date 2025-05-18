@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import axios from 'axios';
 import { usePrivy } from '@privy-io/react-auth';
 
-// Create wallet context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
@@ -31,7 +30,7 @@ const LoginUI = () => {
     setIsConnecting(true);
     try {
       // Use login method with Solana wallet options
-      await login({
+      login({
         loginMethods: ['wallet'],
       });
     } finally {
@@ -39,15 +38,15 @@ const LoginUI = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      await login({
-        loginMethods: ['google'],
-      });
-    } catch (error) {
-      console.error('Google login error:', error);
-    }
-  };
+  // const handleGoogleLogin = async () => {
+  //   try {
+  //     await login({
+  //       loginMethods: ['google'],
+  //     });
+  //   } catch (error) {
+  //     console.error('Google login error:', error);
+  //   }
+  // };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -77,23 +76,23 @@ const LoginUI = () => {
               Your wallet seems to be taking a coffee break ☕️
             </p>
             <Button
-              className={`button connect-button ${isConnecting ? 'opacity-70' : ''} mb-4 mr-3`}
+              className={`bg-[#FF0B7A] hover:bg-[#FF0B7A]/80 text-white ${isConnecting ? 'opacity-70' : ''} mb-4 mr-3`}
               onClick={handleSolanaLogin}
               disabled={isConnecting}
             >
-              {isConnecting ? 'Connecting...' : 'Connect Solana Wallet'}
+              {isConnecting ? 'Connecting...' : 'Connect Wallet'}
             </Button>
-            <Button
+            {/* <Button
               variant="outline"
               onClick={handleGoogleLogin}
               className="mb-4"
             >
               Continue with Google
-            </Button>
+            </Button> */}
 
-            <p className="text-sm text-neutral-500 mt-2">
+            {/* <p className="text-sm text-neutral-500 mt-2">
               No wallet? Sign in with Google to create one automatically
-            </p>
+            </p> */}
           </div>
         </div>
       </div>
@@ -112,15 +111,16 @@ export default function AuthProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const {
-    ready: isReady,
-    authenticated,
-    user,
-    logout,
-    connectWallet,
-  } = usePrivy();
   const [loading, setLoading] = useState(true);
   const [dbRegistered, setDbRegistered] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const {
+    user,
+    logout,
+    authenticated,
+    connectWallet,
+    ready: isReady,
+  } = usePrivy();
 
   // Register user in the database
   const registerUserInDb = async (walletAddress: string) => {
@@ -150,18 +150,10 @@ export default function AuthProvider({
       return false;
     }
   };
-
-  // Handle Privy authentication
-  useEffect(() => {
-    if (!isReady) {
-      // Privy is still initializing
-      return;
-    }
-
-    const initializeUser = async () => {
-      if (authenticated && user) {
-        setLoading(true);
-        try {
+  async function initializeUser() {
+    if (authenticated && user) {
+      setLoading(true);
+      try {
           // Get the wallet address from the user's linked accounts
           const walletAccounts = user.linkedAccounts.filter(
             (account) => account.type === 'wallet'
@@ -210,6 +202,12 @@ export default function AuthProvider({
         setDbRegistered(false);
       }
     };
+  // Handle Privy authentication
+  useEffect(() => {
+    if (!isReady) {
+      // Privy is still initializing
+      return;
+    }
 
     initializeUser();
   }, [isReady, authenticated, user, logout]);
@@ -225,19 +223,6 @@ export default function AuthProvider({
     }
   };
 
-  // Determine wallet address from user object
-  const getWalletAddress = () => {
-    if (!user) return null;
-
-    const walletAccount = user.linkedAccounts.find(
-      (account) => account.type === 'wallet'
-    );
-
-    return walletAccount?.address || user.wallet?.address || null;
-  };
-
-  const wallet = getWalletAddress();
-
   // Create a function that returns a Promise for connectWallet to match AuthContextType
   const handleConnectWallet = async (): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -250,11 +235,17 @@ export default function AuthProvider({
     });
   };
 
+  useEffect(() => {
+    if (user?.wallet?.address) {
+      setWalletAddress(user.wallet.address);
+    }
+  }, [user]);
+
   // Always return the context provider, but conditionally render children or login UI
   return (
     <AuthContext.Provider
       value={{
-        wallet,
+        wallet: walletAddress,
         loading: loading || !isReady,
         connectWallet: handleConnectWallet,
         disconnectWallet,
@@ -262,7 +253,7 @@ export default function AuthProvider({
     >
       {!isReady ? (
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF0B7A]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF0B7A]" />
         </div>
       ) : (!authenticated || !dbRegistered) && !loading ? (
         <LoginUI />

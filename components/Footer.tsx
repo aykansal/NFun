@@ -1,25 +1,33 @@
 import { Circle, Square, Triangle } from 'lucide-react';
 import Link from 'next/link';
 
-function Footer() {
+export default function Footer() {
   return (
-    <footer className="mt-auto w-full py-6 px-4">
-      <div className="max-w-4xl mx-auto flex flex-col items-center">
-        <div className="mb-6 text-center">
-          <p className="mb-4 text-green-400 font-medium text-lg">
-            Join the game, share the laughter!
-          </p>
-          <div className="flex justify-center items-center space-x-10">
-            <Triangle className="w-6 h-6 text-pink-500 animate-bounce" />
-            <Circle className="w-6 h-6 text-purple-500 animate-pulse" />
-            <Square className="w-6 h-6 text-green-500 animate-spin" />
-          </div>
+    <footer className="mt-auto w-full px-3 xs:px-4 pb-3 xs:pb-4">
+      <div className="max-w-4xl mx-auto flex flex-col gap-1 xs:gap-2 items-center">
+        <p className="text-center text-green-400 font-medium text-base xs:text-lg">
+          Join the game, share the laughter!
+        </p>
+        <div className="flex justify-center items-center space-x-6 xs:space-x-8 md:space-x-10">
+          <Triangle className="w-4 h-4 xs:w-5 xs:h-5 md:w-6 md:h-6 text-pink-500 animate-bounce" />
+          <Circle className="w-4 h-4 xs:w-5 xs:h-5 md:w-6 md:h-6 text-purple-500 animate-pulse" />
+          <Square className="w-4 h-4 xs:w-5 xs:h-5 md:w-6 md:h-6 text-green-500 animate-spin" />
         </div>
 
-        <div className="w-full max-w-2xl border-t border-gray-700 pt-5 mt-2"></div>
+        <div className="flex flex-wrap items-center justify-center gap-2 xs:gap-3 md:gap-4 text-xs xs:text-sm text-gray-400">
+          <Link
+            href="https://x.com/nftoodlehq"
+            className="flex items-center gap-1 xs:gap-1.5 font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200 group"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span>Follow on</span>
+            <XIcon className="w-3 h-3 xs:w-4 xs:h-4 group-hover:scale-110 transition-transform duration-200" />
+          </Link>
 
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 py-3 text-sm text-gray-400">
-          <div className="flex items-center gap-2">
+          <Divider />
+
+          <div className="flex items-center gap-1 xs:gap-2">
             <span className="font-medium">Made with</span>
             <span className="text-red-500 animate-pulse">❤️</span>
             <span className="font-medium">by</span>
@@ -36,24 +44,12 @@ function Footer() {
           <Divider />
 
           <Link
-            href="https://x.com/nftoodlehq"
-            className="flex items-center gap-1.5 font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200 group"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span>Follow on</span>
-            <XIcon className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-          </Link>
-
-          <Divider />
-
-          <Link
             href="https://github.com/aykansal/nfun"
-            className="flex items-center gap-1.5 font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200 group"
+            className="flex items-center gap-1 xs:gap-1.5 font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200 group"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <GithubIcon className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+            <GithubIcon className="w-3 h-3 xs:w-4 xs:h-4 group-hover:scale-110 transition-transform duration-200" />
             <span>View Source</span>
           </Link>
         </div>
@@ -61,11 +57,24 @@ function Footer() {
     </footer>
   );
 }
-export default Footer;
 
-export const AuthorDetails = ({ className = '' }: { className: string }) => (
-  <div className={`flex flex-wrap items-center justify-center gap-3 sm:gap-4 py-3 text-sm text-gray-400 ${className}`}>
-    <div className="flex items-center gap-2">
+export const AuthorDetails = ({ className }: { className: string }) => (
+  <div
+    className={`flex flex-wrap items-center justify-center gap-2 xs:gap-3 md:gap-4 py-2 xs:py-3 text-xs xs:text-sm text-gray-400 ${className}`}
+  >
+    <Link
+      href="https://x.com/nftoodlehq"
+      className="flex items-center gap-1 xs:gap-1.5 font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200 group"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <span>Follow on</span>
+      <XIcon className="w-3 h-3 xs:w-4 xs:h-4 group-hover:scale-110 transition-transform duration-200" />
+    </Link>
+
+    <Divider />
+
+    <div className="flex items-center gap-1 xs:gap-2">
       <span className="font-medium">Made with</span>
       <span className="text-red-500 animate-pulse">❤️</span>
       <span className="font-medium">by</span>
@@ -83,18 +92,18 @@ export const AuthorDetails = ({ className = '' }: { className: string }) => (
 
     <Link
       href="https://github.com/aykansal/nfun"
-      className="flex items-center gap-1.5 font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200 group"
+      className="flex items-center gap-1 xs:gap-1.5 font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200 group"
       target="_blank"
       rel="noopener noreferrer"
     >
-      <GithubIcon className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+      <GithubIcon className="w-3 h-3 xs:w-4 xs:h-4 group-hover:scale-110 transition-transform duration-200" />
       <span>View Source</span>
     </Link>
   </div>
 );
 
 const Divider = () => (
-  <div className="h-4 w-px bg-gray-600 mx-1 hidden sm:block" />
+  <div className="h-3 xs:h-4 w-px bg-gray-600 mx-1 hidden xs:block" />
 );
 
 const XIcon = ({ className = '' }) => (

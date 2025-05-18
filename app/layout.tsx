@@ -5,9 +5,9 @@ import Header from '@/components/header';
 import Footer from '@/components/Footer';
 import Background from '@/components/background';
 import { Toaster } from '@/components/ui/sonner';
-import dynamic from 'next/dynamic';
 import { layoutMetadata } from '@/lib/constant';
 import Providers from '@/context/Providers';
+import AuthProvider from '@/context/AuthContext';
 
 const squid = localFont({
   src: '../public/fonts/squid.woff',
@@ -27,10 +27,6 @@ const ibm = localFont({
 
 export const metadata: Metadata = layoutMetadata;
 
-const AuthProviderNoSSR = dynamic(() => import('@/context/AuthContext'), {
-  ssr: false,
-});
-
 export default function RootLayout({
   children,
 }: {
@@ -40,19 +36,19 @@ export default function RootLayout({
     <html lang="en" className={`${ibm.variable} ${squid.variable}`}>
       <body className="flex flex-col bg-[#0A0A0A] text-white">
         <Providers>
-          <AuthProviderNoSSR>
+          <AuthProvider>
             <div className="min-h-screen h-full w-full relative">
               <Background />
-              <div className="relative z-10 flex flex-col min-h-screen 2xl:mb-10">
+              <div className="relative z-10 flex flex-col min-h-screen">
                 <Header />
-                <main className="min-h-[calc(100vh-70px-10vh)] flex flex-col">
+                <main className="min-h-[calc(100vh-70px-10vh)] flex flex-col ">
                   {children}
                 </main>
                 <Footer />
               </div>
               <Toaster />
             </div>
-          </AuthProviderNoSSR>
+          </AuthProvider>
         </Providers>
       </body>
     </html>

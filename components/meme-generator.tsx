@@ -1,14 +1,18 @@
 'use client';
-import { useRef, useState, useEffect } from 'react';
 
 import axios from 'axios';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Type, Wand2, Sticker, Download, Crown } from 'lucide-react';
-
-import type { MemeGeneratorProps } from '@/lib/types';
 import { squidGameVariants } from '@/lib/data';
-
+import { SQUID_ELEMENTS } from '@/lib/constant';
+import { useAuth } from '@/context/AuthContext';
 import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { useRef, useState, useEffect } from 'react';
+import type { MemeGeneratorProps } from '@/lib/types';
+import { buttonVariants, cardVariants } from '@/styles/animations';
+import { Type, Wand2, Sticker, Crown } from 'lucide-react';
 import { Tabs, TabsList, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -17,14 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { buttonVariants, cardVariants } from '@/styles/animations';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
-
-import { useAuth } from '@/context/AuthContext';
-import usePrivyWallet from '@/hooks/usePrivyWallet';
-import { SQUID_ELEMENTS } from '@/lib/constant';
 
 export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,10 +43,9 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
     y: number;
   } | null>(null);
   const [isPlacingEmoji, setIsPlacingEmoji] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('text');
 
-  // Use our Privy wallet hook instead of LazorKit
-  const { signMessage } = usePrivyWallet();
-  const { wallet: userWallet } = useAuth();
+  const { wallet: walletAddress } = useAuth();
 
   useEffect(() => {
     const img = new Image();
@@ -328,40 +323,21 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
     const imageDataUrl = canvas.toDataURL('image/png');
 
     try {
-
       const response = await axios.post('/api/memes', {
         imageDataUrl,
-        userWallet,
+        userWallet: walletAddress,
         originalImage: defaultImage,
       });
-      console.log('Image saved in DB:', response.data);
-      
-      // Get the meme ID from the response
       const memeId = response.data.id;
-      
-      // Sign the message and get transaction ID
-      // Convert instruction to a string message for Privy signing
-      const messageString = `NFun Meme Created: ${memeId}`;
-      const transactionResult = await signMessage(messageString);
-      console.log('Transaction ID:', transactionResult);
-      
-      // If we got a transaction hash, update the meme record
-      if (transactionResult) {
-        const updateResponse = await axios.put('/api/memes', {
-          userWallet,
-          memeId,
-          txnHash: transactionResult
-        });
-        
-        console.log('Meme updated with transaction hash:', updateResponse.data);
-        toast.success('Meme saved and minted successfully!');
+      if (memeId) {
+        toast.success('Meme saved successfully!');
       } else {
-        // If transaction was successful but we didn't get a hash
-        toast('Your meme has been saved to the gallery.');
+        throw new Error('Failed to save meme. Please try again!');
       }
-      
+
+      toast.success('Meme saved successfully!');
     } catch (error) {
-      toast.error('Failed to save meme. Please try again.');
+      toast.error('Failed to save meme. Please try again!');
       console.error('Error during image upload or transaction:', error);
     } finally {
       setIsSaving(false);
@@ -413,24 +389,24 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
       animate="visible"
       exit="exit"
       variants={squidGameVariants}
-      className="min-h-screen p-4 lg:p-8"
+      className="min-h-screen p-2 xs:p-3 sm:p-4 lg:p-8"
     >
       <div className="max-w-7xl mx-auto">
         {/* Main Content Area */}
-        <div className="grid lg:grid-cols-[1fr,400px] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-4 xs:gap-6 md:gap-8">
           {/* Canvas Section */}
-          <motion.div variants={cardVariants} className="order-2 lg:order-1">
+          <motion.div variants={cardVariants} className="order-1">
             <div className="sticky top-4">
-              <div className="squid-card p-6">
+              <div className="squid-card p-3 xs:p-4 sm:p-6">
                 {/* Canvas Container */}
                 <div className="relative w-full aspect-[16/9] max-w-[1600px] mx-auto">
-                  <div className="absolute top-4 right-4 flex gap-2 z-10">
+                  <div className="absolute top-2 xs:top-4 right-2 xs:right-4 flex gap-1 xs:gap-2 z-10">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={undo}
                       disabled={undoStack.length === 0}
-                      className="squid-button-icon group"
+                      className="squid-button-icon group text-xs xs:text-sm"
                       title="Undo"
                     >
                       <span className="sr-only">Undo</span>↩
@@ -441,7 +417,7 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                       whileTap={{ scale: 0.95 }}
                       onClick={redo}
                       disabled={redoStack.length === 0}
-                      className="squid-button-icon group"
+                      className="squid-button-icon group text-xs xs:text-sm"
                       title="Redo"
                     >
                       <span className="sr-only">Redo</span>↪
@@ -456,27 +432,30 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-center gap-4 mt-6">
+                <div className="flex flex-wrap justify-center gap-3 xs:gap-4 mt-4 xs:mt-5 sm:mt-6">
                   <motion.button
                     variants={buttonVariants}
                     whileHover="hover"
                     whileTap="tap"
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="squid-button px-8 py-3"
+                    className="squid-button min-w-[120px] xs:min-w-[140px] flex-1 px-4 xs:px-6 sm:px-8 py-2.5 xs:py-3 text-xs xs:text-sm sm:text-base font-ibm font-medium shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     {isSaving ? (
-                      <span className="flex items-center gap-2">
+                      <span className="flex items-center justify-center gap-2">
                         <motion.div
                           animate={{ rotate: 360 }}
                           transition={{ repeat: Infinity, duration: 1 }}
+                          className="w-4 h-4 flex items-center justify-center"
                         >
                           ⭕
                         </motion.div>
-                        Saving...
+                        <span>Saving...</span>
                       </span>
                     ) : (
-                      'Save Meme'
+                      <span className="flex items-center justify-center">
+                        Save Meme
+                      </span>
                     )}
                   </motion.button>
 
@@ -485,27 +464,20 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                     whileHover="hover"
                     whileTap="tap"
                     onClick={shareToTwitter}
-                    className="squid-button-outline px-8 py-3"
+                    className="squid-button-outline flex-1 min-w-[120px] xs:min-w-[140px] px-4 xs:px-6 sm:px-8 py-2.5 xs:py-3 text-xs xs:text-sm sm:text-base font-ibm font-medium shadow-md hover:shadow-lg transition-shadow"
                   >
-                    Share on Twitter
-                  </motion.button>
-
-                  <motion.button
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={() => {
-                      const canvas = canvasRef.current;
-                      if (!canvas) return;
-                      const link = document.createElement('a');
-                      link.download = 'squid-game-meme.png';
-                      link.href = canvas.toDataURL('image/png');
-                      link.click();
-                    }}
-                    className="squid-button-outline px-8 py-3"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="inline">Post</span>
+                      <span className="inline">On</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="w-3.5 h-3.5 xs:w-4 xs:h-4 mr-1.5 xs:mr-2"
+                      >
+                        <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5549 21H20.7996L13.6819 10.6218H13.6823ZM11.5541 13.0956L10.8574 12.0991L5.31391 4.16971H7.70053L12.1742 10.5689L12.8709 11.5655L18.6861 19.8835H16.2995L11.5541 13.096V13.0956Z" />
+                      </svg>
+                    </span>
                   </motion.button>
                 </div>
               </div>
@@ -513,11 +485,39 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
           </motion.div>
 
           {/* Controls Section */}
-          <motion.div variants={cardVariants} className="order-1 lg:order-2">
+          <motion.div variants={cardVariants} className="order-2">
             <div className="sticky top-4">
               <div className="squid-card">
-                <Tabs defaultValue="text" className="h-full">
-                  <TabsList className="grid grid-cols-4 p-2 gap-2 bg-gray-900/50">
+                {/* Mobile Dropdown for Edit Options (visible only on small screens) */}
+                <div className="block lg:hidden p-3 xs:p-4">
+                  <Label className="block mb-2 text-xs xs:text-sm">
+                    Edit Options
+                  </Label>
+                  <Select
+                    value={activeTab}
+                    onValueChange={(value) => {
+                      setActiveTab(value);
+                      console.log('Tab changed to:', value);
+                    }}
+                  >
+                    <SelectTrigger className="squid-input text-xs xs:text-sm">
+                      <SelectValue placeholder="Select edit option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text">Text</SelectItem>
+                      <SelectItem value="stickers">Stickers</SelectItem>
+                      <SelectItem value="effects">Effects</SelectItem>
+                      <SelectItem value="tools">Tools</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Tabs 
+                  value={activeTab} 
+                  onValueChange={setActiveTab} 
+                  className="h-full"
+                >
+                  <TabsList className="hidden lg:grid grid-cols-4 p-2 gap-2 bg-gray">
                     {[
                       { id: 'text', icon: Type, label: 'Text' },
                       { id: 'stickers', icon: Sticker, label: 'Stickers' },
@@ -527,7 +527,7 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                       <TabsTrigger
                         key={id}
                         value={id}
-                        className="squid-tab squid-tab-wrapper"
+                        className="relative flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-300 hover:bg-[#FF0B7A]/20 data-[state=active]:bg-[#FF0B7A] data-[state=active]:text-white"
                       >
                         <Icon className="w-5 h-5" />
                         <span className="squid-tooltip">{label}</span>
@@ -536,28 +536,35 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                   </TabsList>
 
                   {/* Text Tab */}
-                  <TabsContent value="text" className="p-6 space-y-6">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Top Text</Label>
+                  <TabsContent
+                    value="text"
+                    className="p-3 xs:p-4 sm:p-6 space-y-3 xs:space-y-4 sm:space-y-6"
+                  >
+                    <div className="space-y-2 xs:space-y-3 sm:space-y-4">
+                      <div className="space-y-1 xs:space-y-2">
+                        <Label className="text-xs xs:text-sm">Top Text</Label>
                         <Input
                           type="text"
                           value={topText}
                           onChange={(e) => setTopText(e.target.value)}
-                          className="squid-input"
+                          className="squid-input text-xs xs:text-sm"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Bottom Text</Label>
+                      <div className="space-y-1 xs:space-y-2">
+                        <Label className="text-xs xs:text-sm">
+                          Bottom Text
+                        </Label>
                         <Input
                           type="text"
                           value={bottomText}
                           onChange={(e) => setBottomText(e.target.value)}
-                          className="squid-input"
+                          className="squid-input text-xs xs:text-sm"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Font Size: {fontSize}px</Label>
+                      <div className="space-y-1 xs:space-y-2">
+                        <Label className="text-xs xs:text-sm">
+                          Font Size: {fontSize}px
+                        </Label>
                         <Slider
                           value={[fontSize]}
                           onValueChange={([value]) => setFontSize(value)}
@@ -567,22 +574,24 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                           className="py-2"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Text Color</Label>
+                      <div className="space-y-1 xs:space-y-2">
+                        <Label className="text-xs xs:text-sm">Text Color</Label>
                         <Input
                           type="color"
                           value={textColor}
                           onChange={(e) => setTextColor(e.target.value)}
-                          className="squid-input"
+                          className="squid-input h-8 xs:h-10"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Text Effect</Label>
+                      <div className="space-y-1 xs:space-y-2">
+                        <Label className="text-xs xs:text-sm">
+                          Text Effect
+                        </Label>
                         <Select
                           value={textEffect}
                           onValueChange={setTextEffect}
                         >
-                          <SelectTrigger className="squid-input">
+                          <SelectTrigger className="squid-input text-xs xs:text-sm">
                             <SelectValue placeholder="Select effect" />
                           </SelectTrigger>
                           <SelectContent>
@@ -591,13 +600,15 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Text Animation</Label>
+                      <div className="space-y-1 xs:space-y-2">
+                        <Label className="text-xs xs:text-sm">
+                          Text Animation
+                        </Label>
                         <Select
                           value={textAnimation}
                           onValueChange={setTextAnimation}
                         >
-                          <SelectTrigger className="squid-input">
+                          <SelectTrigger className="squid-input text-xs xs:text-sm">
                             <SelectValue placeholder="Choose animation" />
                           </SelectTrigger>
                           <SelectContent>
@@ -612,8 +623,11 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                   </TabsContent>
 
                   {/* Stickers Tab */}
-                  <TabsContent value="stickers" className="p-6">
-                    <div className="grid grid-cols-3 gap-3">
+                  <TabsContent 
+                    value="stickers" 
+                    className="p-3 xs:p-4 sm:p-6"
+                  >
+                    <div className="grid grid-cols-3 gap-2 xs:gap-3">
                       {Object.entries(SQUID_ELEMENTS.emojis).map(
                         ([key, emoji]) => (
                           <button
@@ -625,7 +639,7 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                                 'Click on the canvas to place the emoji'
                               );
                             }}
-                            className={`squid-button text-2xl aspect-square ${isPlacingEmoji && selectedEmoji === emoji ? 'ring-2 ring-[#FF0B7A]' : ''}`}
+                            className={`squid-button text-lg xs:text-xl sm:text-2xl aspect-square ${isPlacingEmoji && selectedEmoji === emoji ? 'ring-2 ring-[#FF0B7A]' : ''}`}
                           >
                             {emoji}
                           </button>
@@ -635,14 +649,19 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                   </TabsContent>
 
                   {/* Effects Tab */}
-                  <TabsContent value="effects" className="p-6 space-y-6">
-                    <div className="space-y-2">
-                      <Label>Filter Effect</Label>
+                  <TabsContent
+                    value="effects"
+                    className="p-3 xs:p-4 sm:p-6 space-y-3 xs:space-y-4 sm:space-y-6"
+                  >
+                    <div className="space-y-1 xs:space-y-2">
+                      <Label className="text-xs xs:text-sm">
+                        Filter Effect
+                      </Label>
                       <Select
                         value={selectedFilter}
                         onValueChange={setSelectedFilter}
                       >
-                        <SelectTrigger className="squid-input">
+                        <SelectTrigger className="squid-input text-xs xs:text-sm">
                           <SelectValue placeholder="Choose filter" />
                         </SelectTrigger>
                         <SelectContent>
@@ -660,15 +679,18 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
                   </TabsContent>
 
                   {/* Tools Tab */}
-                  <TabsContent value="tools" className="p-6 space-y-6">
-                    <div className="space-y-4">
-                      <div className="squid-control-group">
-                        <Label>Font Style</Label>
+                  <TabsContent
+                    value="tools"
+                    className="p-3 xs:p-4 sm:p-6 space-y-3 xs:space-y-4 sm:space-y-6"
+                  >
+                    <div className="space-y-2 xs:space-y-3 sm:space-y-4">
+                      <div className="squid-control-group p-2 xs:p-3 sm:p-4">
+                        <Label className="text-xs xs:text-sm">Font Style</Label>
                         <Select
                           value={selectedFont}
                           onValueChange={setSelectedFont}
                         >
-                          <SelectTrigger className="squid-input">
+                          <SelectTrigger className="squid-input text-xs xs:text-sm">
                             <SelectValue placeholder="Choose font" />
                           </SelectTrigger>
                           <SelectContent>
@@ -685,7 +707,7 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
 
                       <button
                         onClick={generateSquidCaption}
-                        className="squid-button w-full"
+                        className="squid-button w-full text-xs xs:text-sm py-2 xs:py-3"
                       >
                         Generate Squid Game Caption
                       </button>

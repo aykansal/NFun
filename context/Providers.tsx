@@ -2,7 +2,6 @@
 
 import { PrivyProvider } from '@privy-io/react-auth';
 import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,25 +11,29 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       config={{
         loginMethods: ['wallet', 'google'],
         appearance: {
-          theme: 'light',
+          theme: 'dark',
           accentColor: '#FF0B7A',
           showWalletLoginFirst: true,
           walletChainType: 'solana-only',
         },
         embeddedWallets: {
-          createOnLogin: 'users-without-wallets',
+          createOnLogin: 'off',
           solana: {
-            createOnLogin: 'users-without-wallets',
+            createOnLogin: 'off',
           },
         },
         solanaClusters: [
-          // {
-          //   name: 'mainnet-beta',
-          //   rpcUrl: 'https://api.mainnet-beta.solana.com',
-          // },
+          {
+            name: 'mainnet-beta',
+            rpcUrl: 'https://api.mainnet-beta.solana.com',
+          },
           {
             name: 'devnet',
             rpcUrl: 'https://api.devnet.solana.com',
+          },
+          {
+            name: 'testnet',
+            rpcUrl: 'https://api.testnet.solana.com',
           },
         ],
         externalWallets: {
@@ -40,9 +43,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      <QueryClientProvider client={new QueryClient()}>
-        {children}
-      </QueryClientProvider>
+      {children}
     </PrivyProvider>
   );
 }

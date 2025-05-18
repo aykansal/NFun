@@ -28,15 +28,15 @@ const XShareButton = ({ imageUrl }: { imageUrl: string }) => {
       whileHover="hover"
       whileTap="tap"
       onClick={shareOnTwitter}
-      className="flex justify-center items-center gap-2 squid-button px-4 py-2 rounded-lg w-full sm:w-auto transform transition-all duration-300"
+      className="flex justify-center items-center gap-1 xs:gap-2 squid-button px-2 py-1.5 xs:px-3 xs:py-2 rounded-lg w-full transform transition-all duration-300"
     >
       <span className="font-squid text-white">Share</span>
       <Image
         src="/x.svg"
         alt="X"
-        width={20}
-        height={20}
-        className="brightness-0 invert" // Makes the X logo white
+        width={14}
+        height={14}
+        className="brightness-0 invert xs:w-[16px] xs:h-[16px] md:w-[18px] md:h-[18px] lg:w-[20px] lg:h-[20px]"
       />
     </motion.button>
   );

@@ -36,17 +36,17 @@ export default function MyMemesPage() {
   }, [activeUserAddress]);
 
   return (
-    <div className="p-8 w-full flex-grow overflow-auto text-white">
+    <div className="px-3 xs:px-4 md:px-6 lg:px-8 w-full flex-grow overflow-auto text-white">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto container"
+        className="mx-auto container max-w-7xl"
       >
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="mb-16 font-bold font-squid text-[#FF0B7A] text-5xl text-center"
+          className="mb-6 md:mb-12 lg:mb-16 font-bold font-squid text-[#FF0B7A] text-2xl xs:text-3xl md:text-4xl lg:text-5xl text-center"
         >
           Your Memes
         </motion.h1>
@@ -63,11 +63,11 @@ export default function MyMemesPage() {
                 repeat: Infinity,
                 ease: 'linear',
               }}
-              className="flex justify-center items-center space-x-4"
+              className="flex justify-center items-center space-x-2 xs:space-x-3 md:space-x-4"
             >
-              <Triangle className="w-12 h-12 text-[#FF0B7A]" />
-              <Circle className="w-12 h-12 text-green-400" />
-              <Square className="w-12 h-12 text-[#FF0B7A]" />
+              <Triangle className="w-6 h-6 xs:w-8 xs:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-[#FF0B7A]" />
+              <Circle className="w-6 h-6 xs:w-8 xs:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-green-400" />
+              <Square className="w-6 h-6 xs:w-8 xs:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-[#FF0B7A]" />
             </motion.div>
           </div>
         ) : (
@@ -83,17 +83,17 @@ export default function MyMemesPage() {
                 },
               },
             }}
-            className="gap-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            className="gap-3 xs:gap-4 md:gap-6 lg:gap-8 grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           >
             {memes.length === 0 ? (
               <motion.div
                 variants={cardVariants}
-                className="col-span-full p-12 text-center squid-card"
+                className="col-span-full p-4 xs:p-6 md:p-8 lg:p-12 text-center squid-card"
               >
-                <h3 className="mb-4 font-bold font-ibm text-[#FF0B7A] text-2xl">
+                <h3 className="mb-2 xs:mb-3 md:mb-4 font-bold font-ibm text-[#FF0B7A] text-lg xs:text-xl md:text-2xl">
                   No memes yet!
                 </h3>
-                <p className="mb-8 text-gray-400">
+                <p className="mb-4 xs:mb-6 md:mb-8 text-gray-400 text-xs xs:text-sm md:text-base">
                   Start creating your own memes or save some from the gallery.
                 </p>
                 <Link href="/platforms">
@@ -101,7 +101,7 @@ export default function MyMemesPage() {
                     variants={buttonVariants}
                     whileHover="hover"
                     whileTap="tap"
-                    className="px-8 py-3 rounded-lg squid-button"
+                    className="px-4 py-2 xs:px-6 xs:py-2 md:px-8 md:py-3 rounded-lg squid-button"
                   >
                     Create Meme
                   </motion.button>
@@ -115,26 +115,30 @@ export default function MyMemesPage() {
                   whileHover="hover"
                   className="overflow-hidden squid-card"
                 >
-                  <div className="p-6">
+                  <div className="p-2 xs:p-3 md:p-4 lg:p-6">
                     <div className="relative rounded-lg overflow-hidden aspect-square">
                       <Image
                         src={meme.cloudinaryUrl}
                         alt={`Meme ${index + 1}`}
                         fill
                         className="object-cover"
+                        sizes="(max-width: 475px) 100vw, (max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       />
                     </div>
-                    <div className="flex justify-between items-center mt-4">
-                      <XShareButton imageUrl={meme.cloudinaryUrl} />
-                      <MintNft
-                        name={meme.cloudinaryUrl}
-                        description={meme.cloudinaryUrl}
-                        image={meme.cloudinaryUrl}
-                        minted={meme.minted}
-                        memeId={meme.id}
-                        // isMinting={false}
-                        isCurrentMinting={false}
-                      />
+                    <div className="flex flex-col xs:flex-row justify-between items-center gap-2 xs:gap-3 mt-2 xs:mt-3 md:mt-4">
+                      <div className="w-full xs:w-auto">
+                        <XShareButton imageUrl={meme.cloudinaryUrl} />
+                      </div>
+                      <div className="w-full xs:w-auto">
+                        <MintNft
+                          name={meme.cloudinaryUrl}
+                          description={meme.cloudinaryUrl}
+                          image={meme.cloudinaryUrl}
+                          minted={meme.minted}
+                          memeId={meme.id}
+                          isCurrentMinting={false}
+                        />
+                      </div>
                     </div>
                   </div>
                 </motion.div>

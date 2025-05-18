@@ -9,9 +9,9 @@ import {
 import axios from 'axios';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import usePrivyWallet from '@/hooks/usePrivyWallet';
 import { buttonVariants } from '@/styles/animations';
 import { uploadToArweave, mintExistingNft } from '@/lib/mint';
+import { useAuth } from '@/context/AuthContext';
 
 interface NftDetails {
   nftAddress: string;
@@ -34,19 +34,19 @@ interface MintNftData {
 
 export default function MintNft({
   name,
-  description,
   image,
   minted,
   memeId,
+  description,
   isCurrentMinting,
 }: MintNftData) {
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [success, setSuccess] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [imageLoaded, setImageLoaded] = useState<boolean>(false);
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
-  const { address: walletAddress } = usePrivyWallet();
+  const { wallet: walletAddress } = useAuth();
 
   useEffect(() => {
     if (!image) {
@@ -202,12 +202,15 @@ export default function MintNft({
       if (error instanceof Error) {
         if (error.message.includes('User rejected the request')) {
           setError('User rejected the request');
-          toast.error('User rejected the request');
         } else {
-          console.error('Failed to mint NFT:', error);
+          console.error({
+            error: error.message,
+            stack: error.stack?.split('\n'),
+          });
           setError('Failed to mint NFT');
-          toast.error('Failed to mint NFT');
         }
+      } else {
+        setError('Failed to mint NFT !!');
       }
     }
   };
@@ -222,43 +225,38 @@ export default function MintNft({
   }
 
   return (
-    <div>
+    <div className="w-full">
       {imageLoaded && (
         <TooltipProvider delayDuration={0}>
           <Tooltip open={success && showTooltip}>
             <TooltipTrigger asChild>
-              <div className="w-full font-squid">
-                {minted ? (
-                  <motion.button
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    className="w-full px-4 py-2 rounded-lg font-bold text-white bg-green-600/20 border-2 border-green-500 backdrop-blur-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled
-                  >
-                    Already Minted
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    className={`w-full px-4 py-2 rounded-lg font-bold text-white squid-button transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      isCurrentMinting ? 'animate-pulse' : ''
-                    }`}
-                    onClick={mint}
-                  >
-                    {isCurrentMinting ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                        Minting...
-                      </span>
-                    ) : (
-                      'Mint NFT'
-                    )}
-                  </motion.button>
-                )}
-              </div>
+              {minted ? (
+                <motion.button
+                  // variants={buttonVariants}
+                  className="w-full px-2 py-1.5 xs:px-3 xs:py-2 text-xs xs:text-sm md:text-base rounded-lg font-bold text-white bg-green-500/20 border border-green-400 xs:border-2 backdrop-blur-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 xs:gap-2"
+                  disabled
+                >
+                  <span className="text-green-400">✓</span>
+                  <span className="truncate">Minted</span>
+                </motion.button>
+              ) : (
+                <motion.button
+                  variants={buttonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                  className={`flex justify-center items-center gap-1 xs:gap-2 squid-button px-2 py-1.5 xs:px-3 xs:py-2 rounded-lg w-full transform transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed  ${
+                    isCurrentMinting ? 'animate-pulse bg-[#FF0B7A]/60' : ''
+                  }`}
+                  onClick={mint}
+                  disabled={isCurrentMinting || minted}
+                >
+                  {isCurrentMinting ? (
+                    <span className="inline">Minting...</span>
+                  ) : (
+                    <span className="inline">Mint NFT</span>
+                  )}
+                </motion.button>
+              )}
             </TooltipTrigger>
           </Tooltip>
         </TooltipProvider>

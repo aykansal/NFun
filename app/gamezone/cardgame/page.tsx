@@ -86,6 +86,18 @@ export default function CardGame() {
     setRoundWinner(null);
   };
 
+  const handleGameOver = () => {
+    setGameOver(true);
+    setShowGameSummaryModal(true);
+    const finalMessage =
+      playerScore > computerScore
+        ? "Congratulations! You've won the game!"
+        : playerScore < computerScore
+          ? 'Game Over! The computer wins!'
+          : "It's a tie game!";
+    setBattleResult(finalMessage);
+  };
+
   const handleCardSelect = (card: MemeCard) => {
     if (card.isPlayed || gameOver) return;
 
@@ -136,18 +148,6 @@ export default function CardGame() {
       setBattleResult('');
       setRoundWinner(null);
     }, 2000);
-  };
-
-  const handleGameOver = () => {
-    setGameOver(true);
-    setShowGameSummaryModal(true);
-    const finalMessage =
-      playerScore > computerScore
-        ? "Congratulations! You've won the game!"
-        : playerScore < computerScore
-          ? 'Game Over! The computer wins!'
-          : "It's a tie game!";
-    setBattleResult(finalMessage);
   };
 
   const handleRestart = () => {
