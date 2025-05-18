@@ -23,7 +23,7 @@ model meme {
   user          user       @relation(fields: [userWallet], references: [userWallet])
   userWallet    String
   minted        Boolean    @default(false)
-  txnhash       String?    @unique @default("")
+  txnhash       String?    @default("")
   nftDetail     NftDetail? @relation(fields: [nftDetailId], references: [id])
   nftDetailId   Int?
 }

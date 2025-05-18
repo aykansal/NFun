@@ -244,10 +244,10 @@ export const uploadToArweave = async (imageInput: string | File, name: string, d
         // Create metadata
         const metadata = {
             name,
-            symbol: "NFToodle",
-            description,
+            symbol: "NFTler",
+            description: "Meme Minting by NFToodler",
             seller_fee_basis_points: 500,
-            arweave_image: `https://arweave.net/${imgTxId}`,
+            image: `https://arweave.net/${imgTxId}`,
             external_url: typeof imageInput === 'string' ? imageInput : null,
             attributes: [
                 {
@@ -267,10 +267,10 @@ export const uploadToArweave = async (imageInput: string | File, name: string, d
                     }
                 ],
                 category: "image",
-                maxSupply: 0,
+                maxSupply: 1,
                 creators: [
                     {
-                        address: "CBBUMHRmbVUck99mTCip5sHP16kzGj3QTYB8K3XxwmQx",
+                        address: "creatorAddress",
                         share: 100
                     }
                 ]
@@ -307,8 +307,7 @@ export const uploadToArweave = async (imageInput: string | File, name: string, d
 export const mintExistingNft = async (metadataUri: string, name: string) => {
     console.log("Starting mintExistingNft function...");
     try {
-        const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
-
+        const connection = new Connection(clusterApiUrl("testnet"), 'confirmed');
         const provider = window.solana;
         if (!provider || !provider.isConnected) {
             throw new Error("Wallet not connected");
@@ -319,7 +318,7 @@ export const mintExistingNft = async (metadataUri: string, name: string) => {
         // Initialize Metaplex
         console.log("Initializing Metaplex with wallet identity...");
         const metaplex = Metaplex.make(connection).use(walletAdapterIdentity(provider));
-
+        console.log(metaplex)
         // Create the NFT
         console.log("Creating NFT:", { metadataUri, name, creator: walletPublicKey.toString() });
 
