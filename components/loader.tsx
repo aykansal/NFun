@@ -36,6 +36,7 @@ export default function Loader() {
             width={150}
             alt="loading-gif"
             className="rounded-lg"
+            priority
           />
         </div>
       </motion.div>
@@ -99,9 +100,7 @@ export function Mint2() {
       >
         <div className="flex justify-center">
           <Image
-            src={
-              'https://media.tenor.com/cCXqQ3K2QpIAAAAi/pierre-grimpe.gif'
-            }
+            src={'https://media.tenor.com/cCXqQ3K2QpIAAAAi/pierre-grimpe.gif'}
             height={120}
             width={120}
             alt="loading-gif"
@@ -123,7 +122,9 @@ export function Mint3() {
       >
         <div className="flex justify-center">
           <Image
-            src={'https://media.tenor.com/42bcTn0iuVgAAAAi/under-construction-pikachu.gif'}
+            src={
+              'https://media.tenor.com/42bcTn0iuVgAAAAi/under-construction-pikachu.gif'
+            }
             height={120}
             width={120}
             alt="loading-gif"

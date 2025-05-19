@@ -4,7 +4,7 @@ import Link from 'next/link';
 export default function Footer() {
   return (
     <footer className="mt-auto w-full px-3 xs:px-4 pb-3 xs:py-4">
-      <div className="w-full mx-auto flex items-center justify-between gap-1 xs:gap-2">
+      <div className="w-full mx-auto flex items-end justify-between gap-1 xs:gap-2">
         <p className="text-center text-[#FF0B7A] font-medium text-base xs:text-[15px]">
           Join the game, share the laughter!
         </p>
@@ -15,6 +15,19 @@ export default function Footer() {
           <Square className="w-4 h-4 xs:w-5 xs:h-5 md:w-6 md:h-6 text-green-500 animate-spin" />
         </div>
         <div className="flex flex-col gap-2 justify-center items-center">
+          <div className="flex items-center gap-1 xs:gap-2 text-gray-400">
+            <span className="font-medium">Made with</span>
+            <span className="text-red-500 animate-pulse">{'❤️'}</span>
+            <span className="font-medium">by</span>
+            <Link
+              href="https://x.com/aykansal"
+              className="font-medium text-[#FF0B7A] text-green-400 hover:text-[#FF0B7A]/80 transition-colors duration-200"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Aykansal
+            </Link>
+          </div>
           <div className="flex flex-wrap items-center justify-center gap-2 xs:gap-3 md:gap-4 text-xs xs:text-sm text-gray-400">
             <Link
               href="https://x.com/nftoodlehq"
@@ -26,24 +39,11 @@ export default function Footer() {
               <XIcon className="w-3 h-3 xs:w-4 xs:h-4 group-hover:scale-110 transition-transform duration-200" />
             </Link>
 
-            <Divider />
-            <div className="flex items-center gap-1 xs:gap-2 text-gray-400">
-              <span className="font-medium">Made with</span>
-              <span className="text-red-500 animate-pulse">{'❤️'}</span>
-              <span className="font-medium">by</span>
-              <Link
-                href="https://x.com/aykansal"
-                className="font-medium text-[#FF0B7A] text-green-400 hover:text-[#FF0B7A]/80 transition-colors duration-200"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Aykansal
-              </Link>
-            </div>
+            {/* <Divider /> */}
             <Divider />
 
             <Link
-              href="https://github.com/aykansal/nfun"
+              href="https://github.com/aykansal/nftoodle"
               className="flex items-center gap-1 xs:gap-1.5 font-medium text-[#FF0B7A] hover:text-[#FF0B7A]/80 transition-colors duration-200 group"
               target="_blank"
               rel="noopener noreferrer"
@@ -91,7 +91,7 @@ export const AuthorDetails = ({ className }: { className: string }) => (
     <Divider />
 
     <Link
-      href="https://github.com/aykansal/nfun"
+      href="https://github.com/aykansal/nftoodle"
       className="flex items-center gap-1 xs:gap-1.5 font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200 group"
       target="_blank"
       rel="noopener noreferrer"

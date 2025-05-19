@@ -1,13 +1,13 @@
 import { Triangle, Circle, Square, Hexagon, Hash, DollarSign, Box } from "lucide-react";
 
 const layoutMetadata = {
-  title: 'NFun - Turn NFTs into Viral Memes Instantly',
+  title: 'NFToodle - Turn NFTs into Viral Memes Instantly',
   description:
-    'Create and mint viral NFT memes in seconds with NFun! Customize styles, add captions, and share your Squid Game-inspired creations.',
+    'Create and mint viral NFT memes in seconds with NFToodle! Customize styles, add captions, and share your Squid Game-inspired creations.',
   keywords: [
     'NFT memes',
     'meme generator',
-    'NFun',
+    'NFToodle',
     'viral memes',
     'Squid Game memes',
     'NFT creator',
@@ -15,17 +15,17 @@ const layoutMetadata = {
     'X memes',
   ],
   openGraph: {
-    title: 'NFun - Instant Viral NFT Memes',
+    title: 'NFToodle - Instant Viral NFT Memes',
     description:
-      'Transform NFTs into memes with captions and Squid Game-inspired styles. Mint or share in seconds with NFun. Follow @NFToodleHQ on X!',
-    url: 'https://NFun.ayverse.me',
-    siteName: 'NFun',
+      'Transform NFTs into memes with captions and Squid Game-inspired styles. Mint or share in seconds with NFToodle. Follow @NFToodleHQ on X!',
+    url: 'https://NFToodle.vercel.app',
+    siteName: 'NFToodle',
     images: [
       {
         url: 'https://pbs.twimg.com/profile_images/1903891969476059136/ovNOfG-d_400x400.jpg',
         width: 400,
         height: 400,
-        alt: 'NFun Viral NFT Meme Creator',
+        alt: 'NFToodle Viral NFT Meme Creator',
       },
     ],
     locale: 'en_US',
@@ -33,16 +33,16 @@ const layoutMetadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NFun - Create Viral NFT Memes',
+    title: 'NFToodle - Create Viral NFT Memes',
     description:
-      'Turn NFTs into memes in seconds with NFun! Customize, mint, or share with our Squid Game-themed generator. Follow @NFToodleHQ on X!',
+      'Turn NFTs into memes in seconds with NFToodle! Customize, mint, or share with our Squid Game-themed generator. Follow @NFToodleHQ on X!',
     images: [
       'https://pbs.twimg.com/profile_images/1903891969476059136/ovNOfG-d_400x400.jpg',
     ],
     site: '@NFToodleHQ',
   },
   alternates: {
-    canonical: 'https://NFun.ayverse.me',
+    canonical: 'https://NFToodle.vercel.app',
   },
   robots: {
     index: true,
@@ -188,23 +188,23 @@ const games = [
     description: 'Create and battle with your memes against other players!',
     icon: Triangle,
     comingSoon: false,
-    route: '/gamezone/cardgame',
+    route: '/gamezone/meme-battle',
   },
   {
     id: 2,
-    title: 'Meme Trading',
-    description: 'Trade your memes with other players!',
+    title: 'Match Meme',
+    description: 'Match your memes with other players!',
     icon: Circle,
     comingSoon: false,
-    route: '/gamezone/matchmeme',
+    route: '/gamezone/match-meme',
   },
   {
     id: 3,
-    title: 'NFT Quest',
-    description: 'Complete daily challenges to earn special NFTs!',
+    title: 'Meme Smash',
+    description: 'Smash your memes with other players!',
     icon: Square,
-    comingSoon: true,
-    route: '',
+    comingSoon: false,
+    route: '/gamezone/meme-smash',
   },
 ];
 

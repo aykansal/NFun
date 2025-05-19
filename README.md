@@ -1,6 +1,6 @@
-# NFun
+# NFToodle
 
-NFun is a fast, easy-to-use meme creation tool with a Squid Game-inspired theme. Create, customize, and share your memes with just a few clicks!
+NFToodle is a fast, easy-to-use meme creation tool with a Squid Game-inspired theme. Create, customize, and share your memes with just a few clicks!
 
 ## Features
 
@@ -33,7 +33,7 @@ NFun is a fast, easy-to-use meme creation tool with a Squid Game-inspired theme.
 
 ## Contributing
 
-We welcome contributions to the NFun! Please follow these steps to contribute:
+We welcome contributions to the NFToodle! Please follow these steps to contribute:
 
 1. Fork the repository.
 2. Create a new branch for your feature or bug fix.
@@ -50,4 +50,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Acknowledgements
 
 - Inspired by the visual style of Squid Game
-- Built with 💖 by the NFun team
+- Built with 💖 by the NFToodle team

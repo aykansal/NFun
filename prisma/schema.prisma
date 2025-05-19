@@ -18,6 +18,7 @@ model meme {
   txnhash       String?    @default("")
   nftDetail     NftDetail? @relation(fields: [nftAddress], references: [nftAddress])
   nftAddress    String?
+  votes         Int        @default(0)
 }
 
 model user {

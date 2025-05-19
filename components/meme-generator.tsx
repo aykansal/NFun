@@ -218,8 +218,8 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
       }
     }
 
-    // Add NFun watermark
-    const watermarkText = 'NFun.vercel.app';
+    // Add NFToodle watermark
+    const watermarkText = 'NFToodle.vercel.app';
     // Save the current context state
     ctx.save();
 
@@ -360,7 +360,7 @@ export function MemeGenerator({ defaultImage }: MemeGeneratorProps) {
     if (!canvasRef.current) return;
 
     const caption = encodeURIComponent(
-      `I've just created this cool Meme on @nftoodlehq🦑\n\nCreate your own at https://NFun.vercel.app`
+      `I've just created this cool Meme on @nftoodlehq🦑\n\nCreate your own at https://NFToodle.vercel.app`
     );
 
     const imageUrl = canvasRef.current.toDataURL('image/png');

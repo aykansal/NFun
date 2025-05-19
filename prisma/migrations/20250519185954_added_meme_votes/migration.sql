@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "meme" ADD COLUMN     "votes" INTEGER NOT NULL DEFAULT 0;

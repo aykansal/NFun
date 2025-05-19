@@ -36,18 +36,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${ibm.variable} ${squid.variable}`}>
-      <body className="w-screen h-screen">
+      <body className="bg-black">
         <Providers>
           <AuthProvider>
-            <div className="min-h-screen h-full w-full relative">
+            <div className="min-w-screen min-h-screen h-full w-full relative">
               <Background />
-              <div className="relative z-10 flex flex-col min-h-screen h-full w-full">
+              <div className="relative z-10 flex flex-col h-full w-full">
                 <Header />
                 <MainContainer>{children}</MainContainer>
                 <Footer />
               </div>
               <MintingOverlayWrapper />
-              <Toaster />
+              <Toaster position='bottom-center' />
             </div>
           </AuthProvider>
         </Providers>

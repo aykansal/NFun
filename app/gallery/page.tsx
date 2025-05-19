@@ -85,7 +85,7 @@ export default function GalleryPage() {
       animate={{ opacity: 1, y: 0 }}
       className="mx-auto container max-w-7xl pb-12"
     >
-      <PageTitle title="Meme Gallery" />
+      <PageTitle title="Meme Gallery" className="text-center py-4" />
 
       {initialLoad ? (
         <div className="flex items-center justify-center">

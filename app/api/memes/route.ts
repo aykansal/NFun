@@ -46,7 +46,7 @@ const uploadToCloudinary = async ({
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           public_id: uniquePublicId,
-          folder: 'NFun',
+          folder: 'NFToodle',
           format: 'png',
           transformation: {
             quality: 'auto',

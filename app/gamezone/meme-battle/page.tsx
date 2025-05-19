@@ -3,17 +3,15 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import axios from 'axios';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Swords, Shield, Zap, Home, RefreshCcw } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Swords, Shield, Zap } from 'lucide-react';
 import type { Meme, MemeCard } from '@/lib/types';
 import { Modal } from '@/components/ui/modal';
 import { toast } from 'sonner';
 import Loader from '@/components/loader';
+import { GameLayout } from '../components/GameLayout';
 
 export default function CardGame() {
-  const router = useRouter();
   const [memes, setMemes] = useState<Meme[]>([]);
   const [playerCards, setPlayerCards] = useState<MemeCard[]>([]);
   const [computerCards, setComputerCards] = useState<MemeCard[]>([]);
@@ -27,7 +25,6 @@ export default function CardGame() {
   const [roundWinner, setRoundWinner] = useState<'player' | 'computer' | null>(
     null
   );
-  const [showEndGameModal, setShowEndGameModal] = useState(false);
   const [showGameSummaryModal, setShowGameSummaryModal] = useState(false);
   const [gameOver, setGameOver] = useState(false);
 
@@ -176,124 +173,79 @@ export default function CardGame() {
   if (loading) return <Loader />;
 
   return (
-    <div className="p-8 min-h-screen text-white">
-      <div className="max-w-6xl mx-auto">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-[#FF0B7A] mb-4">
-            Meme Trading Card Battle
-          </h1>
-          <p className="text-lg text-[#45D62E] font-ibm mb-4">
-            Battle with your meme cards against the computer!
-          </p>
-          <div className="flex justify-center gap-4 mb-4">
-            <div className="text-[#FF0B7A]">Player Score: {playerScore}</div>
-            <div className="text-[#45D62E] font-ibm">
-              Computer Score: {computerScore}
-            </div>
-          </div>
-          <div className="flex justify-center gap-4">
-            <Button
-              onClick={initializeGame}
-              className="bg-[#FF0B7A] hover:bg-[#FF0B7A]/80 text-white"
-            >
-              {gameStarted ? 'Restart Game' : 'Start Game'}
-            </Button>
-            <Button
-              onClick={() => router.push('/gamezone')}
-              className="bg-transparent hover:bg-[#FF0B7A]/10 text-[#FF0B7A] border-2 border-[#FF0B7A]"
-            >
-              <Home className="mr-2" size={18} />
-              Back to Games
-            </Button>
-          </div>
-        </header>
-
-        {gameStarted && (
-          <>
-            {/* Battle Area */}
-            <div className="mb-8">
-              <div className="flex justify-center items-center gap-8 min-h-[300px]">
-                <AnimatePresence mode="wait">
-                  {selectedCard && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -50 }}
-                      className={`relative ${roundWinner === 'player' ? 'ring-4 ring-[#45D62E]' : ''}`}
-                    >
-                      <MemeCardComponent card={selectedCard} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {battleResult && (
+    <GameLayout
+      title="Meme Trading Card Battle"
+      description="Battle with your meme cards against the computer!"
+      gameStarted={gameStarted}
+      score={playerScore}
+      bestScore={computerScore}
+      onStart={initializeGame}
+      onRestart={initializeGame}
+      showEndGame={gameStarted}
+      onEndGame={handleGameOver}
+    >
+      {gameStarted && (
+        <>
+          {/* Battle Area */}
+          <div className="mb-8">
+            <div className="flex justify-center items-center gap-8 min-h-[300px]">
+              <AnimatePresence mode="wait">
+                {selectedCard && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-2xl font-bold text-[#FF0B7A]"
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
+                    className={`relative ${roundWinner === 'player' ? 'ring-4 ring-[#45D62E]' : ''}`}
                   >
-                    {battleResult}
+                    <MemeCardComponent card={selectedCard} />
                   </motion.div>
                 )}
+              </AnimatePresence>
 
-                <AnimatePresence mode="wait">
-                  {computerCard && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 50 }}
-                      className={`relative ${roundWinner === 'computer' ? 'ring-4 ring-[#FF0B7A]' : ''}`}
-                    >
-                      <MemeCardComponent card={computerCard} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            {/* Player's Hand */}
-            <div className="grid grid-cols-5 gap-4">
-              {playerCards.map((card) => (
+              {battleResult && (
                 <motion.div
-                  key={card.id}
-                  whileHover={!card.isPlayed ? { scale: 1.05 } : {}}
-                  className={`cursor-pointer ${card.isPlayed ? 'opacity-50' : ''}`}
-                  onClick={() => !card.isPlayed && handleCardSelect(card)}
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-2xl font-bold text-[#FF0B7A]"
                 >
-                  <MemeCardComponent card={card} />
+                  {battleResult}
                 </motion.div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+              )}
 
-      {/* End Game Confirmation Modal */}
-      <Modal
-        isOpen={showEndGameModal}
-        onClose={() => setShowEndGameModal(false)}
-        title="End Game"
-      >
-        <div className="space-y-4">
-          <p className="text-white">
-            Are you sure you want to end the game? Your progress will be lost.
-          </p>
-          <div className="flex justify-end gap-4">
-            <Button
-              onClick={() => setShowEndGameModal(false)}
-              className="bg-transparent hover:bg-[#FF0B7A]/10 text-[#FF0B7A] border-2 border-[#FF0B7A]"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleGameOver}
-              className="bg-[#FF0B7A] hover:bg-[#FF0B7A]/80"
-            >
-              End Game
-            </Button>
+              <AnimatePresence mode="wait">
+                {computerCard && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 50 }}
+                    className={`relative ${roundWinner === 'computer' ? 'ring-4 ring-[#FF0B7A]' : ''}`}
+                  >
+                    <MemeCardComponent card={computerCard} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
-      </Modal>
+
+          {/* Player's Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {playerCards.map((card) => (
+              <motion.div
+                key={card.id}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                whileHover={{ scale: card.isPlayed ? 1 : 1.05 }}
+                className={`${card.isPlayed ? 'opacity-50' : ''}`}
+              >
+                <MemeCardComponent
+                  card={card}
+                  onClick={() => !card.isPlayed && handleCardSelect(card)}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Game Summary Modal */}
       <Modal
@@ -301,55 +253,39 @@ export default function CardGame() {
         onClose={() => setShowGameSummaryModal(false)}
         title="Game Summary"
       >
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <p className="text-white">Game Results:</p>
-            <div className="grid grid-cols-2 gap-4 bg-[#0A0A0A] p-4 rounded-lg">
-              <div>
-                <p className="text-[#FF0B7A]">Your Score</p>
-                <p className="text-2xl font-bold">{playerScore}</p>
-              </div>
-              <div>
-                <p className="text-[#FF0B7A]">Computer Score</p>
-                <p className="text-2xl font-bold">{computerScore}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-[#45D62E] font-ibm text-xl font-bold">
-                  {playerScore > computerScore
-                    ? '🎉 You Won! 🎉'
-                    : playerScore < computerScore
-                      ? 'Better luck next time!'
-                      : "It's a tie!"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-4">
-            <Button
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-[#FF0B7A] mb-4">
+            {battleResult}
+          </h2>
+          <p className="text-lg mb-4">
+            Final Score: {playerScore} - {computerScore}
+          </p>
+          <div className="flex justify-center gap-4">
+            <button
               onClick={handleRestart}
-              className="bg-transparent hover:bg-[#FF0B7A]/10 text-[#FF0B7A] border-2 border-[#FF0B7A] flex items-center gap-2"
+              className="bg-[#FF0B7A] hover:bg-[#FF0B7A]/80 text-white px-6 py-2 rounded-full"
             >
-              <RefreshCcw size={18} />
               Play Again
-            </Button>
-            <Button
-              onClick={() => router.push('/gamezone')}
-              className="bg-[#FF0B7A] hover:bg-[#FF0B7A]/80 flex items-center gap-2"
-            >
-              <Home size={18} />
-              Return Home
-            </Button>
+            </button>
           </div>
         </div>
       </Modal>
-    </div>
+    </GameLayout>
   );
 }
 
-function MemeCardComponent({ card }: { card: MemeCard }) {
+function MemeCardComponent({
+  card,
+  onClick,
+}: {
+  card: MemeCard;
+  onClick?: () => void;
+}) {
   return (
-    <Card className="bg-[#1A1A1A] border-2 border-[#FF0B7A] overflow-hidden">
+    <Card
+      className="bg-[#1A1A1A] border-2 border-[#FF0B7A] overflow-hidden"
+      onClick={onClick}
+    >
       <CardContent className="p-3">
         <div className="relative w-full h-40">
           <Image

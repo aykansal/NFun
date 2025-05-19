@@ -15,7 +15,7 @@ export default function PlatformsPage() {
       animate={{ opacity: 1, y: 0 }}
       className="mx-auto container max-w-7xl"
     >
-      <PageTitle title="Select Platform" />
+      <PageTitle title="Select Platform" className="text-center py-4" />
       <motion.div
         initial="hidden"
         animate="visible"

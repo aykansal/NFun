@@ -134,7 +134,7 @@ export default function AuthProvider({
       console.log('User registration response:', response.data);
 
       if (response.data.isNewUser) {
-        toast.success('Welcome to NFun! Your account has been created.');
+        toast.success('Welcome to NFToodle! Your account has been created.');
       } else {
         console.log('Existing user logged in:', response.data.user);
       }

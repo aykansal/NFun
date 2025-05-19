@@ -8,8 +8,8 @@ const XShareButton = () => {
   const shareOnTwitter = () => {
     try {
       const tweetContent = encodeURIComponent(
-        `🦑 Just created this epic Squid Game meme on NFun! Join the game at https://NFun.ayverse.me\n\n` +
-          `#SquidGame #NFun #NFTs` +
+        `🦑 Just created this epic Squid Game meme on NFToodle! Join the game at https://NFToodle.vercel.app\n\n` +
+          `#SquidGame #NFToodle #NFTs` +
           `built by @aykansal`
       );
       const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetContent}`;
