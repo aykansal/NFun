@@ -39,7 +39,7 @@ export default function RootLayout({
       <body className="bg-black">
         <Providers>
           <AuthProvider>
-            <div className="min-w-screen min-h-screen h-full w-full relative">
+            <div className="relative min-w-screen min-h-screen h-full w-full relative">
               <Background />
               <div className="relative z-10 flex flex-col h-full w-full">
                 <Header />
@@ -47,7 +47,7 @@ export default function RootLayout({
                 <Footer />
               </div>
               <MintingOverlayWrapper />
-              <Toaster position='bottom-center' />
+              <Toaster position="bottom-center" />
             </div>
           </AuthProvider>
         </Providers>

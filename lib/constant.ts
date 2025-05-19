@@ -219,6 +219,19 @@ const floatingElements = [
   },
 ]
 
+const floatingVariants = {
+  initial: { y: 0, opacity: 0 },
+  float: {
+    y: [-10, 10, -10],
+    opacity: [0.3, 0.5, 0.3],
+    transition: {
+      duration: 4,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+};
+
 export {
   layoutMetadata,
   SQUID_ELEMENTS,
@@ -226,5 +239,6 @@ export {
   PUBLIC_ROUTES,
   PROTECTED_ROUTES,
   games,
-  floatingElements
+  floatingElements,
+  floatingVariants
 }

@@ -1,21 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { floatingElements } from '@/lib/constant';
+import { floatingElements, floatingVariants } from '@/lib/constant';
 import { motion, useAnimation } from 'framer-motion';
-
-const floatingVariants = {
-  initial: { y: 0, opacity: 0 },
-  float: {
-    y: [-10, 10, -10],
-    opacity: [0.3, 0.5, 0.3],
-    transition: {
-      duration: 4,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    },
-  },
-};
 
 const Background = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -90,8 +77,9 @@ const Background = () => {
       </div>
 
       {/* Static glowing orbs */}
-      <div className="fixed top-1/4 right-1/4 w-32 h-32 rounded-full bg-[#FF0B7A]/10 blur-3xl z-0"></div>
-      <div className="fixed bottom-1/4 left-1/3 w-40 h-40 rounded-full bg-[#FF0B7A]/10 blur-3xl z-0"></div>
+      {/* <div className="fixed top-1/4 right-1/4 w-32 h-32 rounded-full bg-[#FF0B7A]/10 blur-3xl z-0"></div>
+      <div className="fixed bottom-1/4 left-1/3 w-40 h-40 rounded-full bg-[#FF0B7A]/10 blur-3xl z-0"></div> */}
+
       {/* Floating Elements with Mouse Interaction */}
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -125,7 +113,7 @@ const Background = () => {
         <motion.div
           className="absolute rounded-full"
           style={{
-            width: '300px', 
+            width: '300px',
             height: '300px',
             background:
               'radial-gradient(circle, rgba(255,11,122,0.27) 0%, rgba(255,11,122,0) 70%)', // Increased opacity from 0.15 to 0.3
