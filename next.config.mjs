@@ -30,6 +30,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'arweave.net',
       },
+      {
+        protocol: 'https',
+        hostname: 'tenor.com',
+      },
     ],
   },
   webpack: (config, { isServer }) => {

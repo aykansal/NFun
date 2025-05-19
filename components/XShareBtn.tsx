@@ -4,14 +4,13 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { buttonVariants } from '@/styles/animations';
 
-const XShareButton = ({ imageUrl }: { imageUrl: string }) => {
+const XShareButton = () => {
   const shareOnTwitter = () => {
     try {
       const tweetContent = encodeURIComponent(
         `🦑 Just created this epic Squid Game meme on NFun! Join the game at https://NFun.ayverse.me\n\n` +
-          `🎮 Check out my creation:\n${imageUrl}\n\n` +
           `#SquidGame #NFun #NFTs` +
-          `credits: @aykansal & @satyanshmittal`
+          `built by @aykansal`
       );
       const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetContent}`;
       window.open(twitterUrl, '_blank');
@@ -28,15 +27,15 @@ const XShareButton = ({ imageUrl }: { imageUrl: string }) => {
       whileHover="hover"
       whileTap="tap"
       onClick={shareOnTwitter}
-      className="flex justify-center items-center gap-1 xs:gap-2 squid-button px-2 py-1.5 xs:px-3 xs:py-2 rounded-lg w-full transform transition-all duration-300"
+      className="flex justify-center items-center gap-1.5 xs:gap-2 squid-button px-3 py-2 xs:px-4 xs:py-2.5 rounded-lg w-full transform transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <span className="font-squid text-white">Share</span>
+      <span className="font-squid text-white text-sm xs:text-base">Share</span>
       <Image
         src="/x.svg"
         alt="X"
-        width={14}
-        height={14}
-        className="brightness-0 invert xs:w-[16px] xs:h-[16px] md:w-[18px] md:h-[18px] lg:w-[20px] lg:h-[20px]"
+        width={16}
+        height={16}
+        className="brightness-0 invert xs:w-[18px] xs:h-[18px] md:w-[20px] md:h-[20px] transition-transform duration-300 group-hover:rotate-12"
       />
     </motion.button>
   );

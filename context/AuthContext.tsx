@@ -10,6 +10,7 @@ import { AuthContextType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
 import { usePrivy } from '@privy-io/react-auth';
+import Cookies from 'js-cookie';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -154,54 +155,67 @@ export default function AuthProvider({
     if (authenticated && user) {
       setLoading(true);
       try {
-          // Get the wallet address from the user's linked accounts
-          const walletAccounts = user.linkedAccounts.filter(
-            (account) => account.type === 'wallet'
+        // Get the wallet address from the user's linked accounts
+        const walletAccounts = user.linkedAccounts.filter(
+          (account) => account.type === 'wallet'
+        );
+
+        let walletAddress = null;
+
+        if (walletAccounts.length > 0) {
+          walletAddress = walletAccounts[0].address;
+          console.log('User authenticated with wallet:', walletAddress);
+        } else if (user.wallet && user.wallet.address) {
+          // For embedded wallets
+          walletAddress = user.wallet.address;
+          console.log(
+            'User authenticated with embedded wallet:',
+            walletAddress
           );
+        }
 
-          let walletAddress = null;
+        if (walletAddress) {
+          // Register user in database
+          const registrationSuccess = await registerUserInDb(walletAddress);
 
-          if (walletAccounts.length > 0) {
-            walletAddress = walletAccounts[0].address;
-            console.log('User authenticated with wallet:', walletAddress);
-          } else if (user.wallet && user.wallet.address) {
-            // For embedded wallets
-            walletAddress = user.wallet.address;
-            console.log(
-              'User authenticated with embedded wallet:',
-              walletAddress
-            );
-          }
-
-          if (walletAddress) {
-            // Register user in database
-            const registrationSuccess = await registerUserInDb(walletAddress);
-
-            if (registrationSuccess) {
-              toast.success('Wallet connected successfully!');
-              setDbRegistered(true);
-            } else {
-              toast.error('Failed to register wallet. Please try again.');
-              await logout();
-              setDbRegistered(false);
-            }
+          if (registrationSuccess) {
+            toast.success('Wallet connected successfully!');
+            setDbRegistered(true);
+            // Set wallet address cookie for middleware authentication
+            Cookies.set('wallet_address', walletAddress, {
+              path: '/',
+              sameSite: 'strict',
+            });
           } else {
-            toast.error('No wallet found. Please try again with a wallet.');
+            toast.error('Failed to register wallet. Please try again.');
             await logout();
             setDbRegistered(false);
+            // Remove wallet address cookie if registration fails
+            Cookies.remove('wallet_address', { path: '/' });
           }
-        } catch (error) {
-          console.error('Error initializing user:', error);
-          toast.error('Failed to initialize user');
+        } else {
+          toast.error('No wallet found. Please try again with a wallet.');
+          await logout();
           setDbRegistered(false);
-        } finally {
-          setLoading(false);
+          // Remove wallet address cookie if no wallet found
+          Cookies.remove('wallet_address', { path: '/' });
         }
-      } else {
-        setLoading(false);
+      } catch (error) {
+        console.error('Error initializing user:', error);
+        toast.error('Failed to initialize user');
         setDbRegistered(false);
+        // Remove wallet address cookie on error
+        Cookies.remove('wallet_address', { path: '/' });
+      } finally {
+        setLoading(false);
       }
-    };
+    } else {
+      setLoading(false);
+      setDbRegistered(false);
+      // Remove wallet address cookie if not authenticated
+      Cookies.remove('wallet_address', { path: '/' });
+    }
+  }
   // Handle Privy authentication
   useEffect(() => {
     if (!isReady) {
@@ -217,6 +231,8 @@ export default function AuthProvider({
       await logout();
       setDbRegistered(false);
       toast.info('Wallet disconnected');
+      // Remove wallet address cookie on disconnect
+      Cookies.remove('wallet_address', { path: '/' });
     } catch (error) {
       console.error('Error disconnecting wallet:', error);
       toast.error('Failed to disconnect wallet');
@@ -241,7 +257,6 @@ export default function AuthProvider({
     }
   }, [user]);
 
-  // Always return the context provider, but conditionally render children or login UI
   return (
     <AuthContext.Provider
       value={{

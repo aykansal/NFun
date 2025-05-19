@@ -1,71 +1,29 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-const PUBLIC_ROUTES = ['']
-
-// Define routes that require special permissions (e.g., admin routes)
-const PROTECTED_ROUTES = {
-  admin: ['/admin'],
-  creator: ['/create'],
-  user: ['/my-memes', '/gamezone/cardgame', '/gamezone/matchmeme'],
-  platform: ['/platforms'],
-  auth:['/api/auth'],
-  home:['/']
-}
+import { PUBLIC_ROUTES } from '@/lib/constant'
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route))
 
-  // Get auth token from cookie
-  const authToken = request.cookies.get('thirdweb_auth_token')
-  const userRole = request.cookies.get('user_role')?.value || 'user'
-
-  // Allow access to public routes without authentication
+  const isPublicRoute = PUBLIC_ROUTES.some((route: string) => pathname.startsWith(route))
   if (isPublicRoute) {
+    console.log('[Middleware] Public route, allowing access:', pathname)
     return NextResponse.next()
   }
 
-  // Check if user is authenticated
-  if (!authToken) {
-    // Store the attempted URL to redirect back after login
-    const redirectUrl = new URL('/', request.url)
-    redirectUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(redirectUrl)
-  }
-
-  // Check role-based access for protected routes
-  for (const [role, routes] of Object.entries(PROTECTED_ROUTES)) {
-    if (routes.some(route => pathname.startsWith(route))) {
-      if (role !== userRole && role !== 'user') {
-        return NextResponse.redirect(new URL('/unauthorized', request.url))
-      }
+  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/checkUser')) {
+    const walletAddress = request.cookies.get('wallet_address')?.value
+    console.log('[Middleware] API route:', pathname, '| Wallet Address:', walletAddress)
+    if (!walletAddress) {
+      return NextResponse.json({ error: 'Unauthorized: Wallet not connected.' }, { status: 401 })
     }
   }
 
-  // Add security headers
-  const response = NextResponse.next()
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set(
-    'Strict-Transport-Security',
-    'max-age=31536000; includeSubDomains'
-  )
-
-  return response
+  return NextResponse.next()
 }
 
-// Configure which routes should be processed by this middleware
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * 1. /api routes (except /api/auth)
-     * 2. /_next/static (static files)
-     * 3. /_next/image (image optimization files)
-     * 4. /favicon.ico (favicon file)
-     */
-    '/((?!api/(?!auth)|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }

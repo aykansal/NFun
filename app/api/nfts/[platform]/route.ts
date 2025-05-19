@@ -29,14 +29,17 @@ export async function GET(
       }),
       prisma.nfts.findMany({
         where: { platform: Platforms[platformEnum] },
-        select: { sourceUrl: true },
+        select: { sourceUrl: true, id: true },
         skip: (page - 1) * limit,
         take: limit,
       })
     ]);
 
     return NextResponse.json({
-      urls: paginatedUrls.map(entry => entry.sourceUrl),
+      urls: paginatedUrls.map(entry => ({
+        sourceUrl: entry.sourceUrl,
+        id: entry.id
+      })),
       total,
       page,
       totalPages: Math.ceil(total / limit),

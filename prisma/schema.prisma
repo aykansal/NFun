@@ -2,17 +2,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// datasource db {
-//   provider  = "postgresql"
-//   url       = env("DATABASE_URL")
-//   directUrl = env("DIRECT_URL")
-// }
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // uncomment next line if you use Prisma <5.10
-  // directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model meme {
@@ -24,8 +16,8 @@ model meme {
   userWallet    String
   minted        Boolean    @default(false)
   txnhash       String?    @default("")
-  nftDetail     NftDetail? @relation(fields: [nftDetailId], references: [id])
-  nftDetailId   Int?
+  nftDetail     NftDetail? @relation(fields: [nftAddress], references: [nftAddress])
+  nftAddress    String?
 }
 
 model user {
@@ -37,8 +29,7 @@ model user {
 }
 
 model NftDetail {
-  id                   Int     @id @default(autoincrement())
-  nftAddress           String  @unique
+  nftAddress           String  @id @unique
   mintAddress          String
   name                 String
   uri                  String

@@ -31,6 +31,7 @@ interface MintNftData {
   minted: boolean;
   memeId: number;
   isCurrentMinting: boolean;
+  onMintSuccess?: () => void;
 }
 
 export default function MintNft({
@@ -40,6 +41,7 @@ export default function MintNft({
   memeId,
   description,
   isCurrentMinting,
+  onMintSuccess,
 }: MintNftData) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -131,7 +133,7 @@ export default function MintNft({
     try {
       setError(null);
       setSuccess(false);
-      
+
       // Start the minting process and show the overlay
       startMinting(memeId);
 
@@ -206,7 +208,10 @@ export default function MintNft({
 
       setSuccess(true);
       setShowTooltip(true);
-      
+
+      // Call the onMintSuccess callback if provided
+      onMintSuccess?.();
+
       // End the minting process and hide the overlay
       finishMinting();
     } catch (error) {
@@ -223,8 +228,6 @@ export default function MintNft({
       } else {
         setError('Failed to mint NFT !!');
       }
-      
-      // End the minting process and hide the overlay
       finishMinting();
     }
   };
@@ -246,7 +249,6 @@ export default function MintNft({
             <TooltipTrigger asChild>
               {minted ? (
                 <motion.button
-                  // variants={buttonVariants}
                   className="w-full px-2 py-1.5 xs:px-3 xs:py-2 text-xs xs:text-sm md:text-base rounded-lg font-bold text-white bg-green-500/20 border border-green-400 xs:border-2 backdrop-blur-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 xs:gap-2"
                   disabled
                 >

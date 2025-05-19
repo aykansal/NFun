@@ -9,6 +9,7 @@ import { layoutMetadata } from '@/lib/constant';
 import Providers from '@/context/Providers';
 import AuthProvider from '@/context/AuthContext';
 import MintingOverlayWrapper from '@/components/thirdweb/MintingOverlayWrapper';
+import MainContainer from '@/components/layout/MainContainer';
 
 const squid = localFont({
   src: '../public/fonts/squid.woff',
@@ -35,16 +36,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${ibm.variable} ${squid.variable}`}>
-      <body className="flex flex-col bg-[#0A0A0A] text-white">
+      <body className="w-screen h-screen">
         <Providers>
           <AuthProvider>
             <div className="min-h-screen h-full w-full relative">
               <Background />
-              <div className="relative z-10 flex flex-col min-h-screen">
+              <div className="relative z-10 flex flex-col min-h-screen h-full w-full">
                 <Header />
-                <main className="min-h-[calc(100vh-70px-10vh)] flex flex-col ">
-                  {children}
-                </main>
+                <MainContainer>{children}</MainContainer>
                 <Footer />
               </div>
               <MintingOverlayWrapper />

@@ -3,55 +3,55 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="mt-auto w-full px-3 xs:px-4 pb-3 xs:pb-4">
-      <div className="max-w-4xl mx-auto flex flex-col gap-1 xs:gap-2 items-center">
-        <p className="text-center text-green-400 font-medium text-base xs:text-lg">
+    <footer className="mt-auto w-full px-3 xs:px-4 pb-3 xs:py-4">
+      <div className="w-full mx-auto flex items-center justify-between gap-1 xs:gap-2">
+        <p className="text-center text-[#FF0B7A] font-medium text-base xs:text-[15px]">
           Join the game, share the laughter!
         </p>
-        <div className="flex justify-center items-center space-x-6 xs:space-x-8 md:space-x-10">
+
+        <div className="flex justify-center items-center space-x-6 xs:space-x-8 md:space-x-7">
           <Triangle className="w-4 h-4 xs:w-5 xs:h-5 md:w-6 md:h-6 text-pink-500 animate-bounce" />
           <Circle className="w-4 h-4 xs:w-5 xs:h-5 md:w-6 md:h-6 text-purple-500 animate-pulse" />
           <Square className="w-4 h-4 xs:w-5 xs:h-5 md:w-6 md:h-6 text-green-500 animate-spin" />
         </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-2 xs:gap-3 md:gap-4 text-xs xs:text-sm text-gray-400">
-          <Link
-            href="https://x.com/nftoodlehq"
-            className="flex items-center gap-1 xs:gap-1.5 font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200 group"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span>Follow on</span>
-            <XIcon className="w-3 h-3 xs:w-4 xs:h-4 group-hover:scale-110 transition-transform duration-200" />
-          </Link>
-
-          <Divider />
-
-          <div className="flex items-center gap-1 xs:gap-2">
-            <span className="font-medium">Made with</span>
-            <span className="text-red-500 animate-pulse">❤️</span>
-            <span className="font-medium">by</span>
+        <div className="flex flex-col gap-2 justify-center items-center">
+          <div className="flex flex-wrap items-center justify-center gap-2 xs:gap-3 md:gap-4 text-xs xs:text-sm text-gray-400">
             <Link
-              href="https://x.com/aykansal"
-              className="font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200"
+              href="https://x.com/nftoodlehq"
+              className="flex items-center gap-1 xs:gap-1.5 font-medium text-[#FF0B7A] hover:text-[#FF0B7A]/80 transition-colors duration-200 group"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Aykansal
+              <span>Follow on</span>
+              <XIcon className="w-3 h-3 xs:w-4 xs:h-4 group-hover:scale-110 transition-transform duration-200" />
+            </Link>
+
+            <Divider />
+            <div className="flex items-center gap-1 xs:gap-2 text-gray-400">
+              <span className="font-medium">Made with</span>
+              <span className="text-red-500 animate-pulse">{'❤️'}</span>
+              <span className="font-medium">by</span>
+              <Link
+                href="https://x.com/aykansal"
+                className="font-medium text-[#FF0B7A] text-green-400 hover:text-[#FF0B7A]/80 transition-colors duration-200"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Aykansal
+              </Link>
+            </div>
+            <Divider />
+
+            <Link
+              href="https://github.com/aykansal/nfun"
+              className="flex items-center gap-1 xs:gap-1.5 font-medium text-[#FF0B7A] hover:text-[#FF0B7A]/80 transition-colors duration-200 group"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <GithubIcon className="w-3 h-3 xs:w-4 xs:h-4 group-hover:scale-110 transition-transform duration-200" />
+              <span>View Source</span>
             </Link>
           </div>
-
-          <Divider />
-
-          <Link
-            href="https://github.com/aykansal/nfun"
-            className="flex items-center gap-1 xs:gap-1.5 font-medium text-pink-500 hover:text-pink-400 transition-colors duration-200 group"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <GithubIcon className="w-3 h-3 xs:w-4 xs:h-4 group-hover:scale-110 transition-transform duration-200" />
-            <span>View Source</span>
-          </Link>
         </div>
       </div>
     </footer>

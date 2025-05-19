@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Mint1, Mint2, Mint3, Mint4 } from '@/components/loader';
+import { motion } from 'framer-motion';
 
 interface MintingOverlayProps {
   isVisible: boolean;
@@ -12,18 +13,22 @@ const steps = {
   preparing: {
     title: 'Preparing Your NFT',
     description: 'Getting your meme ready for the blockchain...',
+    loader: <Mint1 />,
   },
   uploading: {
-    title: 'Uploading to IPFS',
-    description: 'Storing your meme permanently on decentralized storage...',
+    title: 'Uploading to Arweave',
+    description: 'Storing your meme permanently on Arweave...',
+    loader: <Mint2 />,
   },
   minting: {
     title: 'Minting NFT',
     description: 'Creating your unique token on the blockchain...',
+    loader: <Mint3 />,
   },
   confirming: {
     title: 'Confirming Transaction',
     description: 'Waiting for the blockchain to confirm your NFT...',
+    loader: <Mint4 />,
   },
 };
 
@@ -34,7 +39,7 @@ const MintingOverlay: React.FC<MintingOverlayProps> = ({
   if (!isVisible) return null;
 
   return (
-    <AnimatePresence>
+    <>
       {isVisible && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -50,23 +55,9 @@ const MintingOverlay: React.FC<MintingOverlayProps> = ({
           >
             <div className="mb-4 relative w-40 h-40">
               {/* Animation based on current step */}
-              <motion.div
-                animate={{
-                  rotate: [0, 360],
-                  scale: [1, 1.05, 1],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
-                className="absolute inset-0 flex justify-center items-center"
-              >
-                <div className="relative w-32 h-32">
-                  <div className="absolute inset-0 rounded-full border-4 border-[#FF0B7A] opacity-20"></div>
-                  <div className="absolute inset-0 rounded-full border-4 border-[#FF0B7A] border-t-transparent animate-spin"></div>
-                </div>
-              </motion.div>
+              <div className="absolute inset-0 flex justify-center items-center">
+                {steps[currentStep].loader}
+              </div>
             </div>
 
             <motion.h2
@@ -115,7 +106,7 @@ const MintingOverlay: React.FC<MintingOverlayProps> = ({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </>
   );
 };
 

@@ -37,7 +37,7 @@ export async function PUT(req: NextRequest) {
 
     // Create NftDetail record and update meme with relation
     let updatedMeme;
-    
+
     if (nftDetails) {
       try {
         // Check if NFT with this address already exists
@@ -46,7 +46,7 @@ export async function PUT(req: NextRequest) {
             nftAddress: nftDetails.nftAddress
           }
         });
-        
+
         if (existingNftDetail) {
           // Update meme to reference existing NftDetail
           updatedMeme = await prisma.meme.update({
@@ -55,7 +55,11 @@ export async function PUT(req: NextRequest) {
             },
             data: {
               minted: mintStatus,
-              nftDetailId: existingNftDetail.id
+              nftDetail: {
+                connect: {
+                  nftAddress: existingNftDetail.nftAddress
+                }
+              }
             },
             include: {
               nftDetail: true
@@ -76,7 +80,7 @@ export async function PUT(req: NextRequest) {
                 ownerAddress: nftDetails.ownerAddress
               },
             });
-            
+
             // Update meme with reference to new NFT detail
             const updatedMeme = await tx.meme.update({
               where: {
@@ -84,21 +88,25 @@ export async function PUT(req: NextRequest) {
               },
               data: {
                 minted: mintStatus,
-                nftDetailId: newNftDetail.id
+                nftDetail: {
+                  connect: {
+                    nftAddress: newNftDetail.nftAddress
+                  }
+                }
               },
               include: {
                 nftDetail: true
               }
             });
-            
+
             return { updatedMeme, newNftDetail };
           });
-          
+
           updatedMeme = result.updatedMeme;
         }
       } catch (error) {
         console.error('Error creating NFT detail:', error);
-        
+
         // Fallback: update just the minted status if NFT detail creation fails
         updatedMeme = await prisma.meme.update({
           where: {

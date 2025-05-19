@@ -1,4 +1,70 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { floatingElements } from '@/lib/constant';
+import { motion, useAnimation } from 'framer-motion';
+
+const floatingVariants = {
+  initial: { y: 0, opacity: 0 },
+  float: {
+    y: [-10, 10, -10],
+    opacity: [0.3, 0.5, 0.3],
+    transition: {
+      duration: 4,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+};
+
 const Background = () => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const backgroundControls = useAnimation();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e;
+
+      // Calculate position relative to center of screen
+      const moveX = clientX - windowSize.width / 2;
+      const moveY = clientY - windowSize.height / 2;
+
+      // Set mouse position for glow effect (constrained to viewport)
+      setMousePosition({
+        x: Math.max(0, Math.min(clientX, windowSize.width)),
+        y: Math.max(0, Math.min(clientY, windowSize.height)),
+      });
+
+      // For background parallax effect, use a dampened value
+      const offsetFactor = 0.008; // Reduced from 0.01 for subtler effect
+      backgroundControls.start({
+        x: moveX * offsetFactor,
+        y: moveY * offsetFactor,
+        transition: { type: 'spring', stiffness: 150, damping: 15 },
+      });
+    };
+
+    if (windowSize.width > 0) {
+      window.addEventListener('mousemove', handleMouseMove);
+      return () => window.removeEventListener('mousemove', handleMouseMove);
+    }
+  }, [backgroundControls, windowSize]);
+
   return (
     <>
       {/* Static background elements */}
@@ -26,6 +92,50 @@ const Background = () => {
       {/* Static glowing orbs */}
       <div className="fixed top-1/4 right-1/4 w-32 h-32 rounded-full bg-[#FF0B7A]/10 blur-3xl z-0"></div>
       <div className="fixed bottom-1/4 left-1/3 w-40 h-40 rounded-full bg-[#FF0B7A]/10 blur-3xl z-0"></div>
+      {/* Floating Elements with Mouse Interaction */}
+      <div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        style={{ maxWidth: '100%' }}
+      >
+        {floatingElements.map((item, index) => (
+          <motion.div
+            key={index}
+            initial="initial"
+            animate="float"
+            variants={floatingVariants}
+            className={`absolute ${item.position}`}
+          >
+            <item.Icon className={`${item.size} text-[#FF0B7A]/30`} />
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Interactive glow effect following cursor */}
+      <div
+        className="fixed pointer-events-none"
+        style={{
+          width: '100%',
+          height: '100%',
+          top: 0,
+          left: 0,
+          overflow: 'hidden',
+          zIndex: 0,
+        }}
+      >
+        <motion.div
+          className="absolute rounded-full"
+          style={{
+            width: '300px', 
+            height: '300px',
+            background:
+              'radial-gradient(circle, rgba(255,11,122,0.27) 0%, rgba(255,11,122,0) 70%)', // Increased opacity from 0.15 to 0.3
+            left: mousePosition.x,
+            top: mousePosition.y,
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+          }}
+        />
+      </div>
     </>
   );
 };

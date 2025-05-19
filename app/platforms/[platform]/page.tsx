@@ -1,16 +1,16 @@
 'use client';
 
+import axios from 'axios';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-// import usePagination from '@/hooks/usePagination';
+import { useParams, useRouter } from 'next/navigation';
+import { ImageCard } from '@/components/ui/image-card';
+import { PageTitle } from '@/components/ui/page-title';
 import { Triangle, Circle, Square } from 'lucide-react';
-// import { verifyValidImages } from '@/lib/verify';
-import Image from 'next/image';
-import axios from 'axios';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -22,24 +22,6 @@ const containerVariants = {
   },
 };
 
-// const itemVariants = {
-//   hidden: { opacity: 0, y: 20 },
-//   visible: {
-//     opacity: 1,
-//     y: 0,
-//     transition: {
-//       type: 'spring',
-//       stiffness: 100,
-//     },
-//   },
-// };
-
-const cardVariants = {
-  initial: { opacity: 0, scale: 0.9 },
-  visible: { opacity: 1, scale: 1 },
-  hover: { scale: 1.05 },
-};
-
 const buttonVariants = {
   initial: { opacity: 0, scale: 0.9 },
   visible: { opacity: 1, scale: 1 },
@@ -49,9 +31,8 @@ const buttonVariants = {
 
 export default function PlatformPage() {
   const router = useRouter();
-  // @ts-expect-error ignore
   const { platform } = useParams();
-  const [nfts, setNfts] = useState<string[]>([]);
+  const [nfts, setNfts] = useState<{ sourceUrl: string; id: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,6 +51,7 @@ export default function PlatformPage() {
         );
         if (!response.data) throw new Error('Failed to fetch NFTs');
         const data = await response.data;
+        console.log(data);
         setNfts(data.urls);
         setTotalPages(data.totalPages);
         setTotal(data.total);
@@ -82,11 +64,6 @@ export default function PlatformPage() {
 
     fetchNFTs();
   }, [platform, currentPage]);
-
-  const handleNftClick = (imageUrl: string) => {
-    const encodedUrl = encodeURIComponent(imageUrl);
-    router.push(`/create/meme?imageUrl=${encodedUrl}`);
-  };
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -128,20 +105,14 @@ export default function PlatformPage() {
 
       <div className="mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-8 xs:py-12 md:py-16 lg:py-20 container">
         <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center mb-6 xs:mb-8 md:mb-12 lg:mb-16 gap-4 xs:gap-0">
-          <motion.h1
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="font-bold font-ibm text-[#FF0B7A] text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
-          >
-            {platformTitle} NFTs
-          </motion.h1>
+          <PageTitle title={`${platformTitle} NFTs`} className="!mb-0" />
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
           >
             <Button
               variant="outline"
-              onClick={() => window.history.back()}
+              onClick={() => router.back()}
               className="border border-gray-700 xs:border-2 hover:border-pink-500 bg-gray-800/50 backdrop-blur-sm px-3 xs:px-4 md:px-6 py-1 xs:py-1.5 md:py-2 text-xs xs:text-sm md:text-lg text-white"
             >
               Back to Platforms
@@ -166,26 +137,20 @@ export default function PlatformPage() {
                   </Card>
                 ))
               : nfts.map((nft, index) => (
-                  <motion.div
-                    key={`${nft}-${index}`}
-                    variants={cardVariants}
-                    initial="initial"
-                    animate="visible"
-                    whileHover="hover"
-                    className="p-2 xs:p-3 md:p-4 cursor-pointer squid-card"
-                    onClick={() => handleNftClick(nft)}
+                  <Link
+                    href={`/platforms/${platform}/create-meme?imageUrl=${encodeURIComponent(nft.sourceUrl)}`}
+                    key={`${nft.id}-${index}`}
                   >
-                    <div className="relative rounded-lg overflow-hidden aspect-square">
-                      <Image
-                        src={nft}
-                        alt="NFT"
-                        fill
-                        sizes="(max-width: 475px) 100vw, (max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        className="object-cover"
-                        priority={index < 4}
-                      />
-                    </div>
-                  </motion.div>
+                    <ImageCard
+                      imageSrc={nft.sourceUrl}
+                      imageAlt="NFT"
+                      aspectRatio="square"
+                      animate={true}
+                      whileHoverEffect={true}
+                      padding="sm"
+                      priority={index < 4}
+                    />
+                  </Link>
                 ))}
           </AnimatePresence>
         </motion.div>
